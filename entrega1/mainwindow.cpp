@@ -25,8 +25,12 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->colorButton,SIGNAL(clicked(bool)),this,SLOT(change_color_gray(bool)));
     connect(visorS,SIGNAL(mouseSelection(QPointF, int, int)),this,SLOT(selectWindow(QPointF, int, int)));
     connect(visorS,SIGNAL(mouseClic(QPointF)),this,SLOT(deselectWindow(QPointF)));
-    connect(ui->loadBtn,SIGNAL(clicked(bool)),this,SLOT(loadImage(bool)));
+    connect(ui->loadBtn,SIGNAL(clicked()),this,SLOT(loadImage()));
     connect(ui->saveBtn,SIGNAL(clicked()),this,SLOT(saveImage()));
+    connect(ui->copyChannelsBtn,SIGNAL(clicked()),this,SLOT(copyChannels()));
+    connect(ui->copyWindowBtn,SIGNAL(clicked()),this,SLOT(copyWindow()));
+    connect(ui->resizeWindowBtn,SIGNAL(clicked()),this,SLOT(resizeWindow()));
+    connect(ui->enlargeWindowBtn,SIGNAL(clicked()),this,SLOT(enlargeWindow()));
     timer.start(30);
 }
 
@@ -125,7 +129,7 @@ void MainWindow::deselectWindow(QPointF p)
 }
 
 //ENTREGA 1
-void MainWindow::loadImage(bool caca)
+void MainWindow::loadImage()
 {
     timer.stop();
     auto fileName = QFileDialog::getOpenFileName(this,
@@ -147,11 +151,103 @@ void MainWindow::saveImage()
 
     if (imageColor)
     {
-        cvtColor(colorImage, colorImage, COLOR_RGB2BGR);
-        imwrite(fileName.toStdString(), colorImage);
+        Mat aux;
+        cvtColor(destColorImage, aux, COLOR_RGB2BGR);
+        imwrite(fileName.toSresizetdString(), aux);
     }
     else
-        imwrite(fileName.toStdString(), grayImage);
+        imwrite(fileName.toStdString(), destGrayImage);
+}
+
+void MainWindow::copyChannels()
+{
+    if (imageColor)
+    {
+        std::vector<Mat> channels;
+        split(colorImage, channels);
+
+        if (!ui->rCheck->isChecked())
+            channels[0].setTo(0);
+        if (!ui->gCheck->isChecked())
+            channels[1].setTo(0);
+        if (!ui->bCheck->isChecked())
+            channels[2].setTo(0);
+
+        merge(channels, destColorImage);
+    }
+}
+
+void MainWindow::copyWindow()
+{
+    if(winSelected)
+    {
+        Mat copyWindow, destImage;
+        int x = (320 - imageWindow.width) / 2, y = (240 - imageWindow.height) / 2;
+
+        destColorImage.setTo(0);
+        destGrayImage.setTo(0);
+
+        copyWindow = Mat(colorImage,imageWindow);
+        destImage = Mat(destColorImage, Rect(x, y, imageWindow.width, imageWindow.height));
+        copyWindow.copyTo(destImage);
+
+        copyWindow = Mat(grayImage,imageWindow);
+        destImage = Mat(destGrayImage, Rect(x, y, imageWindow.width, imageWindow.height));
+        copyWindow.copyTo(destImage);
+    }
+}
+
+void MainWindow::resizeWindow()
+{
+    if(winSelected)
+    {
+        Mat copyWindow,destImage;
+
+        destColorImage.setTo(0);
+        destGrayImage.setTo(0);
+
+        copyWindow = Mat(colorImage,imageWindow);
+        cv::resize(copyWindow, copyWindow, Size(320,240));
+        copyWindow.copyTo(destColorImage);
+
+        copyWindow = Mat(grayImage,imageWindow);
+        cv::resize(copyWindow, copyWindow, Size(320,240));
+        copyWindow.copyTo(destGrayImage);
+    }
+}
+
+void MainWindow::enlargeWindow()
+{
+    if(winSelected)
+    {
+        Mat copyWindow,destImage;
+
+        destColorImage.setTo(0);
+        destGrayImage.setTo(0);
+
+        bool proportion = 320 / 240 <= imageWindow.width / imageWindow.height;
+        int width, height;
+        if (proportion)
+        {
+           width = ;
+           height = ;
+        }
+        else
+        {
+            width = ;
+            height = ;
+        }
+
+
+        int x = (320 - imageWindow.width) / 2, y = (240 - imageWindow.height) / 2;
+        copyWindow = Mat(colorImage,imageWindow);
+        cv::resize(copyWindow, copyWindow, Size(320,240));
+        copyWindow.copyTo(destColorImage);
+
+        copyWindow = Mat(grayImage,imageWindow);
+        cv::resize(copyWindow, copyWindow, Size(320,240));
+        copyWindow.copyTo(destGrayImage);
+    }
 }
 
 
