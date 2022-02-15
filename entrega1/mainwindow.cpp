@@ -31,6 +31,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->copyWindowBtn,SIGNAL(clicked()),this,SLOT(copyWindow()));
     connect(ui->resizeWindowBtn,SIGNAL(clicked()),this,SLOT(resizeWindow()));
     connect(ui->enlargeWindowBtn,SIGNAL(clicked()),this,SLOT(enlargeWindow()));
+    connect(visorS,SIGNAL(mouseClic(QPointF)),this,SLOT(getPixelValues(QPointF)));
     timer.start(30);
 }
 
@@ -153,7 +154,7 @@ void MainWindow::saveImage()
     {
         Mat aux;
         cvtColor(destColorImage, aux, COLOR_RGB2BGR);
-        imwrite(fileName.toSresizetdString(), aux);
+        imwrite(fileName.toStdString(), aux);
     }
     else
         imwrite(fileName.toStdString(), destGrayImage);
@@ -220,34 +221,39 @@ void MainWindow::enlargeWindow()
 {
     if(winSelected)
     {
-        Mat copyWindow,destImage;
+        Mat copyWindow, destImage, auxImage;
+        float fx = 320. / imageWindow.width, fy = 240. / imageWindow.height, factor;
+        int y, x;
+
 
         destColorImage.setTo(0);
         destGrayImage.setTo(0);
 
-        bool proportion = 320 / 240 <= imageWindow.width / imageWindow.height;
-        int width, height;
-        if (proportion)
-        {
-           width = ;
-           height = ;
-        }
+        if (fx < fy)
+           factor = fx;
         else
-        {
-            width = ;
-            height = ;
-        }
+           factor = fy;
 
-
-        int x = (320 - imageWindow.width) / 2, y = (240 - imageWindow.height) / 2;
         copyWindow = Mat(colorImage,imageWindow);
-        cv::resize(copyWindow, copyWindow, Size(320,240));
-        copyWindow.copyTo(destColorImage);
+        cv::resize(copyWindow, auxImage, Size(), factor, factor);
+        x = (320 - auxImage.cols) / 2;
+        y = (240 - auxImage.rows) / 2;
+        destImage = Mat(destColorImage, Rect(x, y, auxImage.cols, auxImage.rows));
+        auxImage.copyTo(destImage);
 
         copyWindow = Mat(grayImage,imageWindow);
-        cv::resize(copyWindow, copyWindow, Size(320,240));
-        copyWindow.copyTo(destGrayImage);
+        cv::resize(copyWindow, auxImage, Size(), factor, factor);
+        x = (320 - auxImage.cols) / 2;
+        y = (240 - auxImage.rows) / 2;
+        destImage = Mat(destGrayImage, Rect(x, y, auxImage.cols, auxImage.rows));
+        auxImage.copyTo(destImage);
     }
+}
+
+void MainWindow::getPixelValues(QPointF point)
+{
+
+    QToolTip::showText(QPoint(point.x(), point.y()), QString("caca"), visorS);
 }
 
 

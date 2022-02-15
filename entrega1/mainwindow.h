@@ -10,6 +10,7 @@
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
 #include <QFileDialog>
+#include <QToolTip>
 
 #include <imgviewer.h>
 
@@ -53,6 +54,7 @@ public slots:
     void copyWindow();
     void resizeWindow();
     void enlargeWindow();
+    void getPixelValues(QPointF point);
 
 };
 
