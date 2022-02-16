@@ -55,6 +55,7 @@ public slots:
     void resizeWindow();
     void enlargeWindow();
     void getPixelValues(QPointF point);
+    void warpZoom();
 
 };
 

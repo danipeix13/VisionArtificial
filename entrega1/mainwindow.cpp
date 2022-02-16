@@ -20,6 +20,8 @@ MainWindow::MainWindow(QWidget *parent) :
     visorS = new ImgViewer(&grayImage, ui->imageFrameS);
     visorD = new ImgViewer(&destGrayImage, ui->imageFrameD);
 
+    imageColor = false;
+
     connect(&timer,SIGNAL(timeout()),this,SLOT(compute()));
     connect(ui->captureButton,SIGNAL(clicked(bool)),this,SLOT(start_stop_capture(bool)));
     connect(ui->colorButton,SIGNAL(clicked(bool)),this,SLOT(change_color_gray(bool)));
@@ -32,6 +34,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->resizeWindowBtn,SIGNAL(clicked()),this,SLOT(resizeWindow()));
     connect(ui->enlargeWindowBtn,SIGNAL(clicked()),this,SLOT(enlargeWindow()));
     connect(visorS,SIGNAL(mouseClic(QPointF)),this,SLOT(getPixelValues(QPointF)));
+
     timer.start(30);
 }
 
@@ -62,7 +65,8 @@ void MainWindow::compute()
 
 
     //En este punto se debe incluir el código asociado con el procesamiento de cada captura
-
+    if(ui->wrapZoomBtn->isChecked())
+        warpZoom();
 
     //Actualización de los visores
 
@@ -252,8 +256,31 @@ void MainWindow::enlargeWindow()
 
 void MainWindow::getPixelValues(QPointF point)
 {
+    Vec3b value;
+    String text;
 
-    QToolTip::showText(QPoint(point.x(), point.y()), QString("caca"), visorS);
+    if(imageColor)
+    {
+        value = colorImage.at<Vec3b>(point.x(), point.y());
+        text = "R:" + std::to_string(value[0]) + "  G:" + std::to_string(value[1]) + "  B:" + std::to_string(value[2]);
+    }
+    else
+    {
+        value = grayImage.at<Vec3b>(point.x(), point.y());
+        text = "GRAY:" + std::to_string(value[0]);
+    }
+
+    QToolTip::showText(mapToGlobal(point.toPoint()), QString::fromStdString(text));
 }
 
+void MainWindow::warpZoom()
+{
+    float angle = ui->dial->value();
+    int hTranslation = ui->horizontalTranslation->value();
+    int vTranslation = ui->verticalTranslation->value();
+    int zoom = ui->zoom->value();
+
+    cv::warpAffine(colorImage,destColorImage, cv::getRotationMatrix2D(cv::Point2f(160, 120), angle, zoom), Size(320, 240));
+    cv::warpAffine(grayImage,destGrayImage,cv::getRotationMatrix2D(cv::Point2f(160, 120), angle, zoom), Size(320, 240));
+}
 
