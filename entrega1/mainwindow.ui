@@ -197,7 +197,7 @@
     <string>Enlarge window</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="wrapZoomBtn">
+  <widget class="QPushButton" name="warpZoomBtn">
    <property name="geometry">
     <rect>
      <x>740</x>
@@ -208,6 +208,9 @@
    </property>
    <property name="text">
     <string>Warp + Zoom</string>
+   </property>
+   <property name="checkable">
+    <bool>true</bool>
    </property>
   </widget>
   <widget class="QWidget" name="gridLayoutWidget">
@@ -228,16 +231,26 @@
     </property>
     <item row="1" column="2">
      <widget class="QScrollBar" name="verticalTranslation">
+      <property name="sliderPosition">
+       <number>50</number>
+      </property>
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>
      </widget>
     </item>
     <item row="1" column="0">
-     <widget class="QDial" name="dial"/>
+     <widget class="QDial" name="dial">
+      <property name="sliderPosition">
+       <number>50</number>
+      </property>
+     </widget>
     </item>
     <item row="1" column="1">
      <widget class="QScrollBar" name="horizontalTranslation">
+      <property name="sliderPosition">
+       <number>50</number>
+      </property>
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>
@@ -245,6 +258,15 @@
     </item>
     <item row="1" column="3">
      <widget class="QScrollBar" name="zoom">
+      <property name="minimum">
+       <number>1</number>
+      </property>
+      <property name="value">
+       <number>1</number>
+      </property>
+      <property name="sliderPosition">
+       <number>1</number>
+      </property>
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>

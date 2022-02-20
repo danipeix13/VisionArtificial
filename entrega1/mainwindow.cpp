@@ -65,7 +65,7 @@ void MainWindow::compute()
 
 
     //En este punto se debe incluir el código asociado con el procesamiento de cada captura
-    if(ui->wrapZoomBtn->isChecked())
+    if(ui->warpZoomBtn->isChecked())
         warpZoom();
 
     //Actualización de los visores
@@ -280,7 +280,18 @@ void MainWindow::warpZoom()
     int vTranslation = ui->verticalTranslation->value();
     int zoom = ui->zoom->value();
 
-    cv::warpAffine(colorImage,destColorImage, cv::getRotationMatrix2D(cv::Point2f(160, 120), angle, zoom), Size(320, 240));
-    cv::warpAffine(grayImage,destGrayImage,cv::getRotationMatrix2D(cv::Point2f(160, 120), angle, zoom), Size(320, 240));
+    /*float warp_values[] = { 1.0, 0.0, 160 + hTranslation,
+                            0.0, 1.0, vTranslation };
+                            */
+
+    std::cout << "Matriz:" << cv::getRotationMatrix2D(cv::Point2f(120 + vTranslation, 160 + hTranslation), angle, zoom) << std::endl;
+
+    //cv::warpAffine(colorImage,destColorImage, cv::getRotationMatrix2D(cv::Point2f(hTranslation, vTranslation), 0, 0), Size(320, 240));
+    cv::warpAffine(colorImage,destColorImage, cv::getRotationMatrix2D(cv::Point2f(120 + vTranslation, 160 + hTranslation), angle, zoom), Size(320, 240));
+
+    /*
+        cv::warpAffine(colorImage,destGrayImage, cv::getRotationMatrix2D(cv::Point2f(hTranslation, vTranslation), 0, 0), Size(320, 240));
+        cv::warpAffine(colorImage,destGrayImage, cv::getRotationMatrix2D(cv::Point2f(hTranslation, vTranslation), angle, zoom), Size(320, 240));
+    */
 }
 
