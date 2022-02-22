@@ -20,24 +20,11 @@ MainWindow::MainWindow(QWidget *parent) :
     visorS = new ImgViewer(&grayImage, ui->imageFrameS);
     visorD = new ImgViewer(&destGrayImage, ui->imageFrameD);
 
-    visorHistoS = new ImgViewer(260,150, (QImage *) NULL, ui->histoFrameS);
-    visorHistoD = new ImgViewer(260,150, (QImage *) NULL, ui->histoFrameD);
-
     connect(&timer,SIGNAL(timeout()),this,SLOT(compute()));
     connect(ui->captureButton,SIGNAL(clicked(bool)),this,SLOT(start_stop_capture(bool)));
     connect(ui->colorButton,SIGNAL(clicked(bool)),this,SLOT(change_color_gray(bool)));
     connect(visorS,SIGNAL(mouseSelection(QPointF, int, int)),this,SLOT(selectWindow(QPointF, int, int)));
     connect(visorS,SIGNAL(mouseClic(QPointF)),this,SLOT(deselectWindow(QPointF)));
-
-    connect(ui->pixelTButton,SIGNAL(clicked()),&pixelTDialog,SLOT(show()));
-    connect(pixelTDialog.okButton,SIGNAL(clicked()),&pixelTDialog,SLOT(hide()));
-
-    connect(ui->kernelButton,SIGNAL(clicked()),&lFilterDialog,SLOT(show()));
-    connect(lFilterDialog.okButton,SIGNAL(clicked()),&lFilterDialog,SLOT(hide()));
-
-    connect(ui->operOrderButton,SIGNAL(clicked()),&operOrderDialog,SLOT(show()));
-    connect(operOrderDialog.okButton,SIGNAL(clicked()),&operOrderDialog,SLOT(hide()));
-
     timer.start(30);
 }
 
@@ -71,46 +58,12 @@ void MainWindow::compute()
 
 
     //Actualización de los visores
-     if(!ui->colorButton->isChecked())
-     {
-         updateHistograms(grayImage, visorHistoS);
-         updateHistograms(destGrayImage, visorHistoD);
-     }
 
-     if(winSelected)
-     {
-         visorS->drawSquare(QPointF(imageWindow.x+imageWindow.width/2, imageWindow.y+imageWindow.height/2), imageWindow.width,imageWindow.height, Qt::green );
-     }
-     visorS->update();
-     visorD->update();
-     visorHistoS->update();
-     visorHistoD->update();
+    if(winSelected)
+        visorS->drawSquare(QRect(imageWindow.x, imageWindow.y, imageWindow.width,imageWindow.height), Qt::green );
 
- }
-
- void MainWindow::updateHistograms(Mat image, ImgViewer * visor)
- {
-     if(image.type() != CV_8UC1) return;
-
-     Mat histogram;
-     int channels[] = {0,0};
-     int histoSize = 256;
-     float grange[] = {0, 256};
-     const float * ranges[] = {grange};
-     double minH, maxH;
-
-     calcHist( &image, 1, channels, Mat(), histogram, 1, &histoSize, ranges, true, false );
-     minMaxLoc(histogram, &minH, &maxH);
-
-     float maxY = visor->getHeight();
-
-     for(int i = 0; i<256; i++)
-     {
-         float hVal = histogram.at<float>(i);
-         float minY = maxY-hVal*maxY/maxH;
-
-         visor->drawLine(QLineF(i+2, minY, i+2, maxY), Qt::red);
-     }
+    visorS->update();
+    visorD->update();
 
 }
 
