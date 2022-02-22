@@ -64,7 +64,7 @@ void MainWindow::compute()
     }
 
 
-    //En este punto se debe incluir el código asociado con el procesamiento de cada captura
+    //En este punto se debe incluir el código asociado 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con el procesamiento de cada captura
     if(ui->warpZoomBtn->isChecked())
         warpZoom();
 
@@ -280,18 +280,12 @@ void MainWindow::warpZoom()
     int vTranslation = ui->verticalTranslation->value();
     int zoom = ui->zoom->value();
 
-    /*float warp_values[] = { 1.0, 0.0, 160 + hTranslation,
-                            0.0, 1.0, vTranslation };
-                            */
+    Mat rtMatrix = cv::getRotationMatrix2D(cv::Point2f(160, 120), angle, zoom);
 
-    std::cout << "Matriz:" << cv::getRotationMatrix2D(cv::Point2f(120 + vTranslation, 160 + hTranslation), angle, zoom) << std::endl;
+    rtMatrix.at<double>(0, 2) += hTranslation;
+    rtMatrix.at<double>(1, 2) += vTranslation;
 
-    //cv::warpAffine(colorImage,destColorImage, cv::getRotationMatrix2D(cv::Point2f(hTranslation, vTranslation), 0, 0), Size(320, 240));
-    cv::warpAffine(colorImage,destColorImage, cv::getRotationMatrix2D(cv::Point2f(120 + vTranslation, 160 + hTranslation), angle, zoom), Size(320, 240));
-
-    /*
-        cv::warpAffine(colorImage,destGrayImage, cv::getRotationMatrix2D(cv::Point2f(hTranslation, vTranslation), 0, 0), Size(320, 240));
-        cv::warpAffine(colorImage,destGrayImage, cv::getRotationMatrix2D(cv::Point2f(hTranslation, vTranslation), angle, zoom), Size(320, 240));
-    */
+    cv::warpAffine(colorImage,destColorImage, rtMatrix, Size(320, 240));
+    cv::warpAffine(grayImage,destGrayImage, rtMatrix, Size(320, 240));
 }
 
