@@ -281,8 +281,7 @@ void MainWindow::warpZoom()
     int zoom = ui->zoom->value();
 
     /*float warp_values[] = { 1.0, 0.0, 160 + hTranslation,
-                            0.0, 1.0, vTranslation };
-                            */
+                              0.0, 1.0, 120 + vTranslation };*/
 
     std::cout << "Matriz:" << cv::getRotationMatrix2D(cv::Point2f(120 + vTranslation, 160 + hTranslation), angle, zoom) << std::endl;
 
