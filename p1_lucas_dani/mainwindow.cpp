@@ -20,8 +20,6 @@ MainWindow::MainWindow(QWidget *parent) :
     visorS = new ImgViewer(&grayImage, ui->imageFrameS);
     visorD = new ImgViewer(&destGrayImage, ui->imageFrameD);
 
-    imageColor = false;
-
     connect(&timer,SIGNAL(timeout()),this,SLOT(compute()));
     connect(ui->captureButton,SIGNAL(clicked(bool)),this,SLOT(start_stop_capture(bool)));
     connect(ui->colorButton,SIGNAL(clicked(bool)),this,SLOT(change_color_gray(bool)));
@@ -100,7 +98,6 @@ void MainWindow::change_color_gray(bool color)
         visorS->setImage(&grayImage);
         visorD->setImage(&destGrayImage);
     }
-    imageColor = color;
 }
 
 void MainWindow::selectWindow(QPointF p, int w, int h)
@@ -154,7 +151,7 @@ void MainWindow::saveImage()
         tr("Save Image"), "/home/alumno/Imágenes/image.jpg", tr("Image Files (*.png *.jpg *.bmp)"));
     timer.start(30);
 
-    if (imageColor)
+    if (ui->colorButton->isChecked())
     {
         Mat aux;
         cvtColor(destColorImage, aux, COLOR_RGB2BGR);
@@ -166,7 +163,7 @@ void MainWindow::saveImage()
 
 void MainWindow::copyChannels()
 {
-    if (imageColor)
+    if (ui->colorButton->isChecked())
     {
         std::vector<Mat> channels;
         split(colorImage, channels);
@@ -259,7 +256,7 @@ void MainWindow::getPixelValues(QPointF point)
     Vec3b value;
     String text;
 
-    if(imageColor)
+    if(ui->colorButton->isChecked())
     {
         value = colorImage.at<Vec3b>(point.x(), point.y());
         text = "R:" + std::to_string(value[0]) + "  G:" + std::to_string(value[1]) + "  B:" + std::to_string(value[2]);

@@ -38,6 +38,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->operOrderButton,SIGNAL(clicked()),&operOrderDialog,SLOT(show()));
     connect(operOrderDialog.okButton,SIGNAL(clicked()),&operOrderDialog,SLOT(hide()));
 
+    connect(ui->loadButton,SIGNAL(clicked()),this,SLOT(loadImage()));
+    connect(ui->saveButton,SIGNAL(clicked()),this,SLOT(saveImage()));
+
     timer.start(30);
 }
 
@@ -75,6 +78,18 @@ void MainWindow::compute()
      {
          updateHistograms(grayImage, visorHistoS);
          updateHistograms(destGrayImage, visorHistoD);
+     }
+     else
+     {
+         Mat aux_image, channels[3];
+
+         cv::cvtColor(colorImage, aux_image, cv::COLOR_RGB2YUV);
+         split(aux_image, channels);
+         updateHistograms(channels[0], visorHistoS);
+
+         cv::cvtColor(destColorImage, aux_image, cv::COLOR_RGB2YUV);
+         split(aux_image, channels);
+         updateHistograms(channels[0], visorHistoD);
      }
 
      if(winSelected)
@@ -166,6 +181,36 @@ void MainWindow::deselectWindow(QPointF p)
 {
     std::ignore = p;
     winSelected = false;
+}
+
+void MainWindow::loadImage()
+{
+    timer.stop();
+    auto fileName = QFileDialog::getOpenFileName(this,
+        tr("Open Image"), "/home/alumno/Imágenes", tr("Image Files (*.png *.jpg *.bmp)"));
+    timer.start(30);
+
+    Mat fileImage = imread(fileName.toStdString());
+    cv::resize(fileImage, fileImage, Size(320,240));
+    cvtColor(fileImage, grayImage, COLOR_BGR2GRAY);
+    cvtColor(fileImage, colorImage, COLOR_BGR2RGB);
+}
+
+void MainWindow::saveImage()
+{
+    timer.stop();
+    auto fileName = QFileDialog::getSaveFileName(this,
+        tr("Save Image"), "/home/alumno/Imágenes/image.jpg", tr("Image Files (*.png *.jpg *.bmp)"));
+    timer.start(30);
+
+    if (ui->colorButton->isChecked())
+    {
+        Mat aux;
+        cvtColor(destColorImage, aux, COLOR_RGB2BGR);
+        imwrite(fileName.toStdString(), aux);
+    }
+    else
+        imwrite(fileName.toStdString(), destGrayImage);
 }
 
 

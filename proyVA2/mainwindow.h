@@ -91,6 +91,8 @@ public slots:
     void change_color_gray(bool color);
     void selectWindow(QPointF p, int w, int h);
     void deselectWindow(QPointF p);
+    void loadImage();
+    void saveImage();
 };
 
 
