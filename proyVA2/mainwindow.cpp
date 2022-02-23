@@ -71,7 +71,40 @@ void MainWindow::compute()
 
 
     //En este punto se debe incluir el código asociado con el procesamiento de cada captura
+    int option = ui->operationComboBox->currentIndex();
+    switch(option)
+    {
+    case 0: // Transform pixel CHUNGA :(
+        pixelTransformation();
+        break;
+    case 1: // Thresholding
+        thresholding();
+        break;
+    case 2: // Equalize
 
+        break;
+    case 3: // Gaussian Blur
+
+        break;
+    case 4: // Median Blur
+
+        break;
+    case 5: // Linear Filter CHUNGA :(
+
+        break;
+    case 6: // Dilate
+
+        break;
+    case 7: // Erode
+
+        break;
+    case 8: // Apply several...
+
+        break;
+    default:
+        printf("APRENDE A ESCRIBIR BIEN");
+
+    }
 
     //Actualización de los visores
      if(!ui->colorButton->isChecked())
@@ -211,6 +244,60 @@ void MainWindow::saveImage()
     }
     else
         imwrite(fileName.toStdString(), destGrayImage);
+}
+
+void MainWindow::pixelTransformation()
+{
+    int r0 = 0,
+        s0 = pixelTDialog.grayTransformW->item(0, 1)->text().toInt(),
+        r1 = pixelTDialog.grayTransformW->item(1, 0)->text().toInt(),
+        s1 = pixelTDialog.grayTransformW->item(1, 1)->text().toInt(),
+        r2 = pixelTDialog.grayTransformW->item(2, 0)->text().toInt(),
+        s2 = pixelTDialog.grayTransformW->item(2, 1)->text().toInt(),
+        r3 = 255,
+        s3 = pixelTDialog.grayTransformW->item(3, 1)->text().toInt();
+
+    std::vector<uchar> lut = fillLutTable(r0, s0, r1, s1, r2, s2, r3, s3);
+//    for(int i = 0; i < 256; i++)
+//        qDebug() << i << " - " << lut[i];
+    cv::LUT(grayImage, lut, destGrayImage);
+}
+
+std::vector<uchar> MainWindow::fillLutTable(int r0, int s0, int r1, int s1, int r2, int s2, int r3, int s3)
+{
+    std::vector<uchar> lut;
+    int m, n, i = 0;
+
+    while(i < r1)
+    {
+        m = (s1 - s0) / (r1 - r0);
+        n = s1 - m * r1;
+        lut.push_back(m * i + n);
+        i++;
+    }
+
+    while(i < r2)
+    {
+        m = (s2 - s1) / (r2 - r1);
+        n = s2 - m * r2;
+        lut.push_back(m * i + n);
+        i++;
+    }
+
+    while(i <= r3)
+    {
+        m = (s3 - s2) / (r3 - r2);
+        n = s3 - m * r3;
+        lut.push_back(m * i + n);
+        i++;
+    }
+
+    return lut;
+}
+
+void MainWindow::thresholding()
+{
+    cv::threshold(grayImage, destGrayImage, ui->thresholdSpinBox->value(), 255, THRESH_BINARY);
 }
 
 
