@@ -18,9 +18,6 @@
 
 #include <QtWidgets/QFileDialog>
 
-
-
-
 using namespace cv;
 
 namespace Ui {
@@ -87,6 +84,11 @@ private:
     void pixelTransformation();
     std::vector<uchar> fillLutTable(int r0, int s0, int r1, int s1, int r2, int s2, int r3, int s3);
     void thresholding();
+    void equalize();
+    void gaussianBlur();
+    void medianBlur();
+    void dilate();
+    void erode();
 
 public slots:
     void compute();

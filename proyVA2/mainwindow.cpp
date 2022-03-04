@@ -81,22 +81,22 @@ void MainWindow::compute()
         thresholding();
         break;
     case 2: // Equalize
-
+        equalize();
         break;
     case 3: // Gaussian Blur
-
+        gaussianBlur();
         break;
     case 4: // Median Blur
-
+        medianBlur();
         break;
     case 5: // Linear Filter CHUNGA :(
 
         break;
     case 6: // Dilate
-
+        dilate();
         break;
     case 7: // Erode
-
+        erode();
         break;
     case 8: // Apply several...
 
@@ -297,7 +297,42 @@ std::vector<uchar> MainWindow::fillLutTable(int r0, int s0, int r1, int s1, int 
 
 void MainWindow::thresholding()
 {
+    //TODO : Color?
     cv::threshold(grayImage, destGrayImage, ui->thresholdSpinBox->value(), 255, THRESH_BINARY);
 }
 
 
+void MainWindow::equalize()
+{
+    //TODO : Color?
+    cv::equalizeHist(grayImage, destGrayImage);
+}
+
+void MainWindow::gaussianBlur()
+{
+    //TODO : Color?
+    int w = ui->gaussWidthBox->value();
+    cv::GaussianBlur(grayImage, destGrayImage, Size(w, w), w/5);
+}
+
+void MainWindow::medianBlur()
+{
+    //TODO : Color?
+    cv::medianBlur(grayImage, destGrayImage, 3);
+}
+
+void MainWindow::dilate()
+{
+    // TODO: Se tiene q repetir sobre la misma imagen, si no recuerdo mal
+    thresholding();
+    Mat kernel = Mat();
+    cv::dilate(destGrayImage, destGrayImage, kernel);
+}
+
+void MainWindow::erode()
+{
+    //TODO: Se tiene q repetir sobre la misma imagen
+    thresholding();
+    Mat kernel = Mat();
+    cv::erode(destGrayImage, destGrayImage, kernel);
+}
