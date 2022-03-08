@@ -83,12 +83,15 @@ private:
     void updateHistograms(Mat image, ImgViewer * visor);
     void pixelTransformation();
     std::vector<uchar> fillLutTable(int r0, int s0, int r1, int s1, int r2, int s2, int r3, int s3);
-    void thresholding();
+    void thresholding(Mat srcImage, Mat &dstImage);
     void equalize();
     void gaussianBlur();
     void medianBlur();
     void dilate();
     void erode();
+
+    std::vector<Mat> splitColorImage();
+    void mergeColorImage(std::vector<Mat> channels);
 
 public slots:
     void compute();

@@ -68,34 +68,51 @@ void MainWindow::compute()
         cvtColor(colorImage, colorImage, COLOR_BGR2RGB);
 
     }
+    Mat aux_image;
+    std::vector<Mat> channels;
 
+    cv::cvtColor(colorImage, aux_image, cv::COLOR_RGB2YUV);
+    split(aux_image, channels);
 
     //En este punto se debe incluir el código asociado con el procesamiento de cada captura
     int option = ui->operationComboBox->currentIndex();
+
+    Mat src, dst;
+    if(ui->colorButton->isChecked())
+    {
+        src = channels[0];
+        dst = channels[0];
+    }
+    else
+    {
+        src = grayImage;
+        dst = destGrayImage;
+    }
+
     switch(option)
     {
-    case 0: // Transform pixel CHUNGA :(
+    case 0: // CHUNGA :(
         pixelTransformation();
         break;
-    case 1: // Thresholding
-        thresholding();
+    case 1:
+        thresholding(src, dst);
         break;
-    case 2: // Equalize
+    case 2:
         equalize();
         break;
-    case 3: // Gaussian Blur
+    case 3:
         gaussianBlur();
         break;
-    case 4: // Median Blur
+    case 4:
         medianBlur();
         break;
-    case 5: // Linear Filter CHUNGA :(
+    case 5: // CHUNGA :(
 
         break;
-    case 6: // Dilate
+    case 6:
         dilate();
         break;
-    case 7: // Erode
+    case 7:
         erode();
         break;
     case 8: // Apply several...
@@ -106,6 +123,12 @@ void MainWindow::compute()
 
     }
 
+    if(ui->colorButton->isChecked())
+    {
+        cv::merge(channels, destColorImage);
+        cv::cvtColor(destColorImage, destColorImage, cv::COLOR_YUV2RGB);
+    }
+
     //Actualización de los visores
      if(!ui->colorButton->isChecked())
      {
@@ -114,8 +137,6 @@ void MainWindow::compute()
      }
      else
      {
-         Mat aux_image, channels[3];
-
          cv::cvtColor(colorImage, aux_image, cv::COLOR_RGB2YUV);
          split(aux_image, channels);
          updateHistograms(channels[0], visorHistoS);
@@ -295,16 +316,18 @@ std::vector<uchar> MainWindow::fillLutTable(int r0, int s0, int r1, int s1, int 
     return lut;
 }
 
-void MainWindow::thresholding()
+void MainWindow::thresholding(Mat srcImage, Mat &dstImage)
 {
-    //TODO : Color?
-    cv::threshold(grayImage, destGrayImage, ui->thresholdSpinBox->value(), 255, THRESH_BINARY);
+    cv::threshold(srcImage, dstImage, ui->thresholdSpinBox->value(), 255, THRESH_BINARY);
 }
 
 
 void MainWindow::equalize()
 {
-    //TODO : Color?
+    std::vector<Mat> channels = splitColorImage();
+    cv::equalizeHist(channels[0], channels[0]);
+    mergeColorImage(channels);
+
     cv::equalizeHist(grayImage, destGrayImage);
 }
 
@@ -324,7 +347,7 @@ void MainWindow::medianBlur()
 void MainWindow::dilate()
 {
     // TODO: Se tiene q repetir sobre la misma imagen, si no recuerdo mal
-    thresholding();
+//    thresholding();
     Mat kernel = Mat();
     cv::dilate(destGrayImage, destGrayImage, kernel);
 }
@@ -332,7 +355,26 @@ void MainWindow::dilate()
 void MainWindow::erode()
 {
     //TODO: Se tiene q repetir sobre la misma imagen
-    thresholding();
+//    thresholding();
     Mat kernel = Mat();
     cv::erode(destGrayImage, destGrayImage, kernel);
 }
+
+std::vector<Mat> MainWindow::splitColorImage()
+{
+    Mat aux_image;
+    std::vector<Mat> channels;
+
+    cv::cvtColor(colorImage, aux_image, cv::COLOR_RGB2YUV);
+    cv::split(aux_image, channels);
+
+    return channels;
+}
+
+void MainWindow::mergeColorImage(std::vector<Mat> channels)
+{
+    Mat aux;
+    cv::merge(channels, aux);
+    cv::cvtColor(aux, destColorImage, cv::COLOR_YUV2RGB);
+}
+
