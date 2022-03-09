@@ -81,7 +81,6 @@ void MainWindow::compute()
     if(ui->colorButton->isChecked())
     {
         src = channels[0];
-        dst = channels[0];
     }
     else
     {
@@ -94,7 +93,7 @@ void MainWindow::compute()
     case 0:
         pixelTransformation(src, dst);
         break;
-    case 1: //COLOR
+    case 1:
         thresholding(src, dst);
         break;
     case 2:
@@ -106,13 +105,13 @@ void MainWindow::compute()
     case 4:
         medianBlur(src, dst);
         break;
-    case 5: //COLOR
+    case 5:
         linearFilter(src, dst);
         break;
-    case 6: //COLOR + sobre la misma imagen
+    case 6: //sobre la misma imagen
         dilate(src, dst);
         break;
-    case 7: //COLOR + sobre la misma imagen
+    case 7: //sobre la misma imagen
         erode(src, dst);
         break;
     case 8: // Todito
@@ -123,12 +122,6 @@ void MainWindow::compute()
 
     }
 
-    if(ui->colorButton->isChecked())
-    {
-        cv::merge(channels, destColorImage);/*
-        cv::cvtColor(destColorImage, destColorImage, cv::COLOR_YUV2RGB);*/
-    }
-
     //Actualización de los visores
      if(!ui->colorButton->isChecked())
      {
@@ -136,16 +129,13 @@ void MainWindow::compute()
          updateHistograms(destGrayImage, visorHistoD);
      }
      else
-     {/*
-         cv::cvtColor(colorImage, aux_image, cv::COLOR_RGB2YUV);*/
-         split(aux_image, channels);
+     {
          updateHistograms(channels[0], visorHistoS);
 
+         std::vector<Mat> dstcanales = {dst,channels[1],channels[2]};
+         cv::merge(dstcanales, destColorImage);
          cv::cvtColor(destColorImage, destColorImage, cv::COLOR_YUV2RGB);
-
-         cv::cvtColor(destColorImage, aux_image, cv::COLOR_RGB2YUV);
-         split(aux_image, channels);
-         updateHistograms(channels[0], visorHistoD);
+         updateHistograms(dst, visorHistoD);
      }
 
      if(winSelected)
