@@ -7,7 +7,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    cap = new VideoCapture(2);
+    cap = new VideoCapture(0);
     winSelected = false;
 
     colorImage.create(240,320,CV_8UC3);
@@ -68,7 +68,7 @@ void MainWindow::compute()
         cvtColor(colorImage, colorImage, COLOR_BGR2RGB);
 
     }
-    Mat aux_image;
+    Mat aux_image, intensity;
     std::vector<Mat> channels;
 
     cv::cvtColor(colorImage, aux_image, cv::COLOR_RGB2YUV);
@@ -92,21 +92,21 @@ void MainWindow::compute()
     switch(option)
     {
     case 0:
-        pixelTransformation();
+        pixelTransformation(src, dst);
         break;
     case 1: //COLOR
         thresholding(src, dst);
         break;
-    case 2: //COLOR
+    case 2:
         equalize(src, dst);
         break;
-    case 3: // COLOR
+    case 3:
         gaussianBlur(src, dst);
         break;
-    case 4: //COLOR
+    case 4:
         medianBlur(src, dst);
         break;
-    case 5: // TODITO CHUNGA :(
+    case 5: //COLOR
         linearFilter(src, dst);
         break;
     case 6: //COLOR + sobre la misma imagen
@@ -116,7 +116,7 @@ void MainWindow::compute()
         erode(src, dst);
         break;
     case 8: // Todito
-        applySeveral();
+        //applySeveral();
         break;
     default:
         printf("APRENDE A ESCRIBIR BIEN");
@@ -125,8 +125,8 @@ void MainWindow::compute()
 
     if(ui->colorButton->isChecked())
     {
-        cv::merge(channels, destColorImage);
-        cv::cvtColor(destColorImage, destColorImage, cv::COLOR_YUV2RGB);
+        cv::merge(channels, destColorImage);/*
+        cv::cvtColor(destColorImage, destColorImage, cv::COLOR_YUV2RGB);*/
     }
 
     //Actualización de los visores
@@ -136,10 +136,12 @@ void MainWindow::compute()
          updateHistograms(destGrayImage, visorHistoD);
      }
      else
-     {
-         cv::cvtColor(colorImage, aux_image, cv::COLOR_RGB2YUV);
+     {/*
+         cv::cvtColor(colorImage, aux_image, cv::COLOR_RGB2YUV);*/
          split(aux_image, channels);
          updateHistograms(channels[0], visorHistoS);
+
+         cv::cvtColor(destColorImage, destColorImage, cv::COLOR_YUV2RGB);
 
          cv::cvtColor(destColorImage, aux_image, cv::COLOR_RGB2YUV);
          split(aux_image, channels);
@@ -267,7 +269,7 @@ void MainWindow::saveImage()
         imwrite(fileName.toStdString(), destGrayImage);
 }
 
-void MainWindow::pixelTransformation()
+void MainWindow::pixelTransformation(Mat src, Mat &dst)
 {
     int r0 = 0,
         s0 = pixelTDialog.grayTransformW->item(0, 1)->text().toInt(),
@@ -281,7 +283,8 @@ void MainWindow::pixelTransformation()
     std::vector<uchar> lut = fillLutTable(r0, s0, r1, s1, r2, s2, r3, s3);
 //    for(int i = 0; i < 256; i++)
 //        qDebug() << i << " - " << lut[i];
-    cv::LUT(grayImage, lut, destGrayImage);
+    cv::LUT(src, lut, dst);
+
 }
 
 std::vector<uchar> MainWindow::fillLutTable(int r0, int s0, int r1, int s1, int r2, int s2, int r3, int s3)
@@ -343,17 +346,17 @@ void MainWindow::medianBlur(Mat src, Mat &dst)
 void MainWindow::dilate(Mat src, Mat &dst)
 {
     // TODO: Se tiene q repetir sobre la misma imagen, si no recuerdo mal
-//    thresholding();
+    thresholding(src, dst);
     Mat kernel = Mat();
-    cv::dilate(src, dst, kernel);
+    cv::dilate(dst, dst, kernel);
 }
 
 void MainWindow::erode(Mat src, Mat &dst)
 {
     //TODO: Se tiene q repetir sobre la misma imagen
-//    thresholding();
+    thresholding(src, dst);
     Mat kernel = Mat();
-    cv::erode(src, dst, kernel);
+    cv::erode(dst, dst, kernel);
 }
 
 void MainWindow::linearFilter(Mat src, Mat &dst)
@@ -369,12 +372,9 @@ void MainWindow::linearFilter(Mat src, Mat &dst)
         cb = lFilterDialog.kernelWidget->item(2, 1)->text().toInt(),
         cc = lFilterDialog.kernelWidget->item(2, 2)->text().toInt();
 
-
-    int ddepth = -1;
-    std::vector<int> data = {aa, ab, ac, ba, bb, bc, ca, cb, cc};
-    qInfo() << data;
-    Mat kernel = Mat(Size(3, 3), CV_8UC1, &data);
-    cv::filter2D(src, dst, ddepth, kernel);
+    Mat kernel = (Mat_<int>(3, 3) << aa, ab, ac, ba, bb, bc, ca, cb, cc);
+    int delta = lFilterDialog.addedVBox->value();
+    cv::filter2D(src, dst, -1, kernel, Point(-1, -1), delta);
 }
 
 std::vector<Mat> MainWindow::splitColorImage()

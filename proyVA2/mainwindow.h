@@ -81,7 +81,7 @@ private:
     Rect imageWindow;
 
     void updateHistograms(Mat image, ImgViewer * visor);
-    void pixelTransformation();
+    void pixelTransformation(Mat src, Mat &dst);
     std::vector<uchar> fillLutTable(int r0, int s0, int r1, int s1, int r2, int s2, int r3, int s3);
     void thresholding(Mat src, Mat &dst);
     void equalize(Mat src, Mat &dst);
