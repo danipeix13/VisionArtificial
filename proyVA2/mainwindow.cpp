@@ -7,7 +7,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    cap = new VideoCapture(0);
+    cap = new VideoCapture(2);
     winSelected = false;
 
     colorImage.create(240,320,CV_8UC3);
@@ -91,32 +91,32 @@ void MainWindow::compute()
 
     switch(option)
     {
-    case 0: // CHUNGA :(
+    case 0:
         pixelTransformation();
         break;
-    case 1:
+    case 1: //COLOR
         thresholding(src, dst);
         break;
-    case 2:
-        equalize();
+    case 2: //COLOR
+        equalize(src, dst);
         break;
-    case 3:
-        gaussianBlur();
+    case 3: // COLOR
+        gaussianBlur(src, dst);
         break;
-    case 4:
-        medianBlur();
+    case 4: //COLOR
+        medianBlur(src, dst);
         break;
-    case 5: // CHUNGA :(
-
+    case 5: // TODITO CHUNGA :(
+        linearFilter(src, dst);
         break;
-    case 6:
-        dilate();
+    case 6: //COLOR + sobre la misma imagen
+        dilate(src, dst);
         break;
-    case 7:
-        erode();
+    case 7: //COLOR + sobre la misma imagen
+        erode(src, dst);
         break;
-    case 8: // Apply several...
-
+    case 8: // Todito
+        applySeveral();
         break;
     default:
         printf("APRENDE A ESCRIBIR BIEN");
@@ -316,48 +316,65 @@ std::vector<uchar> MainWindow::fillLutTable(int r0, int s0, int r1, int s1, int 
     return lut;
 }
 
-void MainWindow::thresholding(Mat srcImage, Mat &dstImage)
+void MainWindow::thresholding(Mat src, Mat &dst)
 {
-    cv::threshold(srcImage, dstImage, ui->thresholdSpinBox->value(), 255, THRESH_BINARY);
+    cv::threshold(src, dst, ui->thresholdSpinBox->value(), 255, THRESH_BINARY);
 }
 
 
-void MainWindow::equalize()
+void MainWindow::equalize(Mat src, Mat &dst)
 {
-    std::vector<Mat> channels = splitColorImage();
-    cv::equalizeHist(channels[0], channels[0]);
-    mergeColorImage(channels);
-
-    cv::equalizeHist(grayImage, destGrayImage);
+    cv::equalizeHist(src, dst);
 }
 
-void MainWindow::gaussianBlur()
+void MainWindow::gaussianBlur(Mat src, Mat &dst)
 {
     //TODO : Color?
     int w = ui->gaussWidthBox->value();
-    cv::GaussianBlur(grayImage, destGrayImage, Size(w, w), w/5);
+    cv::GaussianBlur(src, dst, Size(w, w), w/5);
 }
 
-void MainWindow::medianBlur()
+void MainWindow::medianBlur(Mat src, Mat &dst)
 {
     //TODO : Color?
-    cv::medianBlur(grayImage, destGrayImage, 3);
+    cv::medianBlur(src, dst, 3);
 }
 
-void MainWindow::dilate()
+void MainWindow::dilate(Mat src, Mat &dst)
 {
     // TODO: Se tiene q repetir sobre la misma imagen, si no recuerdo mal
 //    thresholding();
     Mat kernel = Mat();
-    cv::dilate(destGrayImage, destGrayImage, kernel);
+    cv::dilate(src, dst, kernel);
 }
 
-void MainWindow::erode()
+void MainWindow::erode(Mat src, Mat &dst)
 {
     //TODO: Se tiene q repetir sobre la misma imagen
 //    thresholding();
     Mat kernel = Mat();
-    cv::erode(destGrayImage, destGrayImage, kernel);
+    cv::erode(src, dst, kernel);
+}
+
+void MainWindow::linearFilter(Mat src, Mat &dst)
+{
+
+    int aa = lFilterDialog.kernelWidget->item(0, 0)->text().toInt(),
+        ab = lFilterDialog.kernelWidget->item(0, 1)->text().toInt(),
+        ac = lFilterDialog.kernelWidget->item(0, 2)->text().toInt(),
+        ba = lFilterDialog.kernelWidget->item(1, 0)->text().toInt(),
+        bb = lFilterDialog.kernelWidget->item(1, 1)->text().toInt(),
+        bc = lFilterDialog.kernelWidget->item(1, 2)->text().toInt(),
+        ca = lFilterDialog.kernelWidget->item(2, 0)->text().toInt(),
+        cb = lFilterDialog.kernelWidget->item(2, 1)->text().toInt(),
+        cc = lFilterDialog.kernelWidget->item(2, 2)->text().toInt();
+
+
+    int ddepth = -1;
+    std::vector<int> data = {aa, ab, ac, ba, bb, bc, ca, cb, cc};
+    qInfo() << data;
+    Mat kernel = Mat(Size(3, 3), CV_8UC1, &data);
+    cv::filter2D(src, dst, ddepth, kernel);
 }
 
 std::vector<Mat> MainWindow::splitColorImage()
