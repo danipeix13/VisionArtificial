@@ -90,6 +90,8 @@ private:
     void dilate(Mat src, Mat &dst);
     void erode(Mat src, Mat &dst);
     void linearFilter(Mat src, Mat &dst);
+    void selectOperation(int option, Mat src, Mat &dst);
+    void applySeveral(Mat src, Mat &dst);
 
     std::vector<Mat> splitColorImage();
     void mergeColorImage(std::vector<Mat> channels);

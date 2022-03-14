@@ -66,8 +66,8 @@ void MainWindow::compute()
         cv::resize(colorImage, colorImage, Size(320,240));
         cvtColor(colorImage, grayImage, COLOR_BGR2GRAY);
         cvtColor(colorImage, colorImage, COLOR_BGR2RGB);
-
     }
+
     Mat aux_image, intensity;
     std::vector<Mat> channels;
 
@@ -88,38 +88,12 @@ void MainWindow::compute()
         dst = destGrayImage;
     }
 
-    switch(option)
-    {
-    case 0:
-        pixelTransformation(src, dst);
-        break;
-    case 1:
-        thresholding(src, dst);
-        break;
-    case 2:
-        equalize(src, dst);
-        break;
-    case 3:
-        gaussianBlur(src, dst);
-        break;
-    case 4:
-        medianBlur(src, dst);
-        break;
-    case 5:
-        linearFilter(src, dst);
-        break;
-    case 6: //sobre la misma imagen
-        dilate(src, dst);
-        break;
-    case 7: //sobre la misma imagen
-        erode(src, dst);
-        break;
-    case 8: // Todito
-        //applySeveral();
-        break;
-    default:
-        printf("APRENDE A ESCRIBIR BIEN");
+    //Método que llame al switch
+    selectOperation(option,src,dst);
 
+    if(ui->operOrderButton->isActiveWindow())
+    {
+        applySeveral(src,dst);
     }
 
     //Actualización de los visores
@@ -383,5 +357,66 @@ void MainWindow::mergeColorImage(std::vector<Mat> channels)
     Mat aux;
     cv::merge(channels, aux);
     cv::cvtColor(aux, destColorImage, cv::COLOR_YUV2RGB);
+}
+
+void MainWindow::selectOperation(int option, Mat src,Mat &dst)
+{
+    switch(option)
+    {
+    case 0:
+        pixelTransformation(src, dst);
+        break;
+    case 1:
+        thresholding(src, dst);
+        break;
+    case 2:
+        equalize(src, dst);
+        break;
+    case 3:
+        gaussianBlur(src, dst);
+        break;
+    case 4:
+        medianBlur(src, dst);
+        break;
+    case 5:
+        linearFilter(src, dst);
+        break;
+    case 6: //sobre la misma imagen
+        dilate(src, dst);
+        break;
+    case 7: //sobre la misma imagen
+        erode(src, dst);
+        break;
+    default:
+        printf("APRENDE A ESCRIBIR BIEN");
+    }
+}
+void MainWindow::applySeveral(Mat src, Mat &dst)
+{
+
+    int option = 0;
+    if(operOrderDialog.firstOperCheckBox->isChecked())
+    {
+        option = operOrderDialog.operationComboBox1->currentIndex();
+        selectOperation(option,dst,dst);
+    }
+    else
+        if(operOrderDialog.secondOperCheckBox->isChecked())
+        {
+            option = operOrderDialog.operationComboBox2->currentIndex();
+            selectOperation(option,dst,dst);
+        }
+         else
+            if(operOrderDialog.thirdOperCheckBox->isChecked())
+            {
+                option = operOrderDialog.operationComboBox3->currentIndex();
+                selectOperation(option,dst,dst);
+            }
+            else
+                if(operOrderDialog.fourthOperCheckBox->isChecked())
+                {
+                    option = operOrderDialog.operationComboBox4->currentIndex();
+                    selectOperation(option,dst,dst);
+                }
 }
 
