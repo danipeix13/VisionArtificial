@@ -51,6 +51,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(lFilterDialog.horizontalBtn,SIGNAL(clicked()),this,SLOT(setHorizontalBorders()));
     connect(lFilterDialog.verticalBtn,SIGNAL(clicked()),this,SLOT(setVerticalBorders()));
     connect(lFilterDialog.resetBtn,SIGNAL(clicked()),this,SLOT(resetLinearKernel()));
+    connect(lFilterDialog.sharpenBtn,SIGNAL(clicked()),this,SLOT(setSharpenKernel()));
+    connect(lFilterDialog.randomBtn,SIGNAL(clicked()),this,SLOT(setRandomKernel()));
 
 
     timer.start(30);
@@ -450,8 +452,8 @@ void MainWindow::setLutNegative()
 void MainWindow::setLutFreestyle()
 {
     std::cout << "CACA" << std::endl;
-//    for (int i = 0; i < 4; i++)
-//        pixelTDialog.grayTransformW->item(i, 1)->setText(QString(std::to_string(rand() % 255)));
+    for (int i = 0; i < 4; i++)
+        pixelTDialog.grayTransformW->item(i, 1)->setText(QString(std::to_string(rand() % 255).c_str()));
 }
 
 void::MainWindow::resetTransformationPixel()
@@ -462,7 +464,7 @@ void::MainWindow::resetTransformationPixel()
     pixelTDialog.grayTransformW->item(3, 1)->setText(QString("255"));
 }
 
-void MainWindow::setVerticalBorders()
+void MainWindow::setHorizontalBorders()
 {
     lFilterDialog.kernelWidget->item(0,0)->setText(QString("-1"));
     lFilterDialog.kernelWidget->item(0,1)->setText(QString("-2"));
@@ -475,7 +477,7 @@ void MainWindow::setVerticalBorders()
     lFilterDialog.kernelWidget->item(2,2)->setText(QString("1"));
 }
 
-void MainWindow::setHorizontalBorders()
+void MainWindow::setVerticalBorders()
 {
     lFilterDialog.kernelWidget->item(0,0)->setText(QString("-1"));
     lFilterDialog.kernelWidget->item(0,1)->setText(QString("0"));
@@ -501,22 +503,25 @@ void MainWindow::resetLinearKernel()
     lFilterDialog.kernelWidget->item(2,2)->setText(QString("0"));
 }
 
-/*
-TODO LIST
+void MainWindow::setSharpenKernel()
+{
+    lFilterDialog.kernelWidget->item(0,0)->setText(QString("0"));
+    lFilterDialog.kernelWidget->item(0,1)->setText(QString("-1"));
+    lFilterDialog.kernelWidget->item(0,2)->setText(QString("0"));
+    lFilterDialog.kernelWidget->item(1,0)->setText(QString("-1"));
+    lFilterDialog.kernelWidget->item(1,1)->setText(QString("5"));
+    lFilterDialog.kernelWidget->item(1,2)->setText(QString("-1"));
+    lFilterDialog.kernelWidget->item(2,0)->setText(QString("0"));
+    lFilterDialog.kernelWidget->item(2,1)->setText(QString("-1"));
+    lFilterDialog.kernelWidget->item(2,2)->setText(QString("0"));
+}
 
-Transform pixel:
- - Reset DONE
- - Acabar el random
-
-Linear filter:
- - Reset DONE
- - Bordes horizontales ((-1 0 1), (-2 0 2), (-1 0 1)) DONE
- - Bordes verticales ((-1 -2 -1), (0 0 0), (1 2 1)) DONE
- - Random
-
-EXTRA
-
-*/
+void MainWindow::setRandomKernel()
+{
+    for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 3; j++)
+            lFilterDialog.kernelWidget->item(i, j)->setText(QString(std::to_string(rand() % 8 - 3).c_str()));
+}
 
 
 

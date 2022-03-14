@@ -112,6 +112,8 @@ public slots:
     void setHorizontalBorders();
     void setVerticalBorders();
     void resetLinearKernel();
+    void setSharpenKernel();
+    void setRandomKernel();
 
 };
 

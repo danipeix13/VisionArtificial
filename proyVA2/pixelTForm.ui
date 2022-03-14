@@ -32,14 +32,14 @@
   <widget class="QPushButton" name="okButton">
    <property name="geometry">
     <rect>
-     <x>130</x>
-     <y>270</y>
-     <width>98</width>
-     <height>27</height>
+     <x>60</x>
+     <y>260</y>
+     <width>101</width>
+     <height>31</height>
     </rect>
    </property>
    <property name="text">
-    <string>Ok</string>
+    <string>OK</string>
    </property>
   </widget>
   <widget class="QTableWidget" name="grayTransformW">
@@ -206,7 +206,7 @@
    <property name="geometry">
     <rect>
      <x>260</x>
-     <y>90</y>
+     <y>50</y>
      <width>89</width>
      <height>25</height>
     </rect>
@@ -219,7 +219,7 @@
    <property name="geometry">
     <rect>
      <x>260</x>
-     <y>120</y>
+     <y>80</y>
      <width>89</width>
      <height>25</height>
     </rect>
@@ -231,14 +231,14 @@
   <widget class="QPushButton" name="resetBtn">
    <property name="geometry">
     <rect>
-     <x>260</x>
-     <y>150</y>
-     <width>89</width>
-     <height>25</height>
+     <x>200</x>
+     <y>260</y>
+     <width>101</width>
+     <height>31</height>
     </rect>
    </property>
    <property name="text">
-    <string>Reset</string>
+    <string>RESET</string>
    </property>
   </widget>
  </widget>
