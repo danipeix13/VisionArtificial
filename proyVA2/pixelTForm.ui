@@ -202,6 +202,32 @@
     </property>
    </item>
   </widget>
+  <widget class="QPushButton" name="negativeBtn">
+   <property name="geometry">
+    <rect>
+     <x>260</x>
+     <y>90</y>
+     <width>89</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Negative</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="frestyleBtn">
+   <property name="geometry">
+    <rect>
+     <x>260</x>
+     <y>120</y>
+     <width>89</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Freestyle</string>
+   </property>
+  </widget>
  </widget>
  <tabstops>
   <tabstop>okButton</tabstop>

@@ -15,6 +15,7 @@
 #include <ui_pixelTForm.h>
 #include <ui_lFilterForm.h>
 #include <ui_operOrderForm.h>
+#include <string>
 
 #include <QtWidgets/QFileDialog>
 
@@ -76,9 +77,10 @@ private:
 
     VideoCapture *cap;
     ImgViewer *visorS, *visorD, *visorHistoS, *visorHistoD;
-    Mat colorImage, grayImage, destColorImage, destGrayImage;
+    Mat colorImage, grayImage, destColorImage, destGrayImage, auxMat;
     bool winSelected;
     Rect imageWindow;
+    int lastOption;
 
     void updateHistograms(Mat image, ImgViewer * visor);
     void pixelTransformation(Mat src, Mat &dst);
@@ -104,6 +106,8 @@ public slots:
     void deselectWindow(QPointF p);
     void loadImage();
     void saveImage();
+    void setLutFreestyle();
+    void setLutNegative();
 };
 
 

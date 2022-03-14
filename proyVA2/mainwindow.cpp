@@ -23,6 +23,9 @@ MainWindow::MainWindow(QWidget *parent) :
     visorHistoS = new ImgViewer(260,150, (QImage *) NULL, ui->histoFrameS);
     visorHistoD = new ImgViewer(260,150, (QImage *) NULL, ui->histoFrameD);
 
+    auxMat = Mat();
+    lastOption = -1;
+
     connect(&timer,SIGNAL(timeout()),this,SLOT(compute()));
     connect(ui->captureButton,SIGNAL(clicked(bool)),this,SLOT(start_stop_capture(bool)));
     connect(ui->colorButton,SIGNAL(clicked(bool)),this,SLOT(change_color_gray(bool)));
@@ -41,6 +44,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->loadButton,SIGNAL(clicked()),this,SLOT(loadImage()));
     connect(ui->saveButton,SIGNAL(clicked()),this,SLOT(saveImage()));
 
+    connect(pixelTDialog.negativeBtn,SIGNAL(clicked()),this,SLOT(setLutNegative()));
+    connect(pixelTDialog.frestyleBtn,SIGNAL(clicked()),this,SLOT(setLutFreestyle()));
     timer.start(30);
 }
 
@@ -76,6 +81,9 @@ void MainWindow::compute()
 
     //En este punto se debe incluir el código asociado con el procesamiento de cada captura
     int option = ui->operationComboBox->currentIndex();
+    if (option != lastOption)
+        auxMat = Mat();
+    lastOption = option;
 
     Mat src, dst;
     if(ui->colorButton->isChecked())
@@ -304,18 +312,24 @@ void MainWindow::medianBlur(Mat src, Mat &dst)
 
 void MainWindow::dilate(Mat src, Mat &dst)
 {
-    // TODO: Se tiene q repetir sobre la misma imagen, si no recuerdo mal
-    thresholding(src, dst);
+    if (auxMat.empty())
+        thresholding(src, dst);
+    else
+        thresholding(auxMat, dst);
     Mat kernel = Mat();
     cv::dilate(dst, dst, kernel);
+    auxMat = dst;
 }
 
 void MainWindow::erode(Mat src, Mat &dst)
 {
-    //TODO: Se tiene q repetir sobre la misma imagen
-    thresholding(src, dst);
+    if (auxMat.empty())
+        thresholding(src, dst);
+    else
+        thresholding(auxMat, dst);
     Mat kernel = Mat();
     cv::erode(dst, dst, kernel);
+    auxMat = dst;
 }
 
 void MainWindow::linearFilter(Mat src, Mat &dst)
@@ -417,4 +431,39 @@ void MainWindow::applySeveral(Mat src, Mat &dst)
         }
     }
 }
+
+void MainWindow::setLutNegative()
+{
+    pixelTDialog.grayTransformW->item(0, 1)->setText(QString("255"));
+    pixelTDialog.grayTransformW->item(1, 1)->setText(QString("170"));
+    pixelTDialog.grayTransformW->item(2, 1)->setText(QString("85"));
+    pixelTDialog.grayTransformW->item(3, 1)->setText(QString("0"));
+}
+
+void MainWindow::setLutFreestyle()
+{
+    std::cout << "CACA" << std::endl;
+//    for (int i = 0; i < 4; i++)
+//        pixelTDialog.grayTransformW->item(i, 1)->setText(QString(std::to_string(rand() % 255)));
+}
+
+
+/*
+TODO LIST
+
+Transform pixel:
+ - Reset
+ - Acabar el random
+
+Linear filter:
+ - Reset
+ - Bordes horizontales ((-1 0 1), (-2 0 2), (-1 0 1))
+ - Bordes verticales ((-1 -2 -1), (0 0 0), (1 2 1))
+ - Random
+
+EXTRA
+
+*/
+
+
 
