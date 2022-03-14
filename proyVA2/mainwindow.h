@@ -108,6 +108,11 @@ public slots:
     void saveImage();
     void setLutFreestyle();
     void setLutNegative();
+    void resetTransformationPixel();
+    void setHorizontalBorders();
+    void setVerticalBorders();
+    void resetLinearKernel();
+
 };
 
 

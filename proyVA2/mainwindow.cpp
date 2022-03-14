@@ -46,6 +46,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(pixelTDialog.negativeBtn,SIGNAL(clicked()),this,SLOT(setLutNegative()));
     connect(pixelTDialog.frestyleBtn,SIGNAL(clicked()),this,SLOT(setLutFreestyle()));
+    connect(pixelTDialog.resetBtn,SIGNAL(clicked()),this,SLOT(resetTransformationPixel()));
+
+    connect(lFilterDialog.horizontalBtn,SIGNAL(clicked()),this,SLOT(setHorizontalBorders()));
+    connect(lFilterDialog.verticalBtn,SIGNAL(clicked()),this,SLOT(setVerticalBorders()));
+    connect(lFilterDialog.resetBtn,SIGNAL(clicked()),this,SLOT(resetLinearKernel()));
+
+
     timer.start(30);
 }
 
@@ -447,18 +454,64 @@ void MainWindow::setLutFreestyle()
 //        pixelTDialog.grayTransformW->item(i, 1)->setText(QString(std::to_string(rand() % 255)));
 }
 
+void::MainWindow::resetTransformationPixel()
+{
+    pixelTDialog.grayTransformW->item(0, 1)->setText(QString("0"));
+    pixelTDialog.grayTransformW->item(1, 1)->setText(QString("85"));
+    pixelTDialog.grayTransformW->item(2, 1)->setText(QString("170"));
+    pixelTDialog.grayTransformW->item(3, 1)->setText(QString("255"));
+}
+
+void MainWindow::setVerticalBorders()
+{
+    lFilterDialog.kernelWidget->item(0,0)->setText(QString("-1"));
+    lFilterDialog.kernelWidget->item(0,1)->setText(QString("-2"));
+    lFilterDialog.kernelWidget->item(0,2)->setText(QString("-1"));
+    lFilterDialog.kernelWidget->item(1,0)->setText(QString("0"));
+    lFilterDialog.kernelWidget->item(1,1)->setText(QString("0"));
+    lFilterDialog.kernelWidget->item(1,2)->setText(QString("0"));
+    lFilterDialog.kernelWidget->item(2,0)->setText(QString("1"));
+    lFilterDialog.kernelWidget->item(2,1)->setText(QString("2"));
+    lFilterDialog.kernelWidget->item(2,2)->setText(QString("1"));
+}
+
+void MainWindow::setHorizontalBorders()
+{
+    lFilterDialog.kernelWidget->item(0,0)->setText(QString("-1"));
+    lFilterDialog.kernelWidget->item(0,1)->setText(QString("0"));
+    lFilterDialog.kernelWidget->item(0,2)->setText(QString("1"));
+    lFilterDialog.kernelWidget->item(1,0)->setText(QString("-2"));
+    lFilterDialog.kernelWidget->item(1,1)->setText(QString("0"));
+    lFilterDialog.kernelWidget->item(1,2)->setText(QString("2"));
+    lFilterDialog.kernelWidget->item(2,0)->setText(QString("-1"));
+    lFilterDialog.kernelWidget->item(2,1)->setText(QString("0"));
+    lFilterDialog.kernelWidget->item(2,2)->setText(QString("1"));
+}
+
+void MainWindow::resetLinearKernel()
+{
+    lFilterDialog.kernelWidget->item(0,0)->setText(QString("0"));
+    lFilterDialog.kernelWidget->item(0,1)->setText(QString("0"));
+    lFilterDialog.kernelWidget->item(0,2)->setText(QString("0"));
+    lFilterDialog.kernelWidget->item(1,0)->setText(QString("0"));
+    lFilterDialog.kernelWidget->item(1,1)->setText(QString("1"));
+    lFilterDialog.kernelWidget->item(1,2)->setText(QString("0"));
+    lFilterDialog.kernelWidget->item(2,0)->setText(QString("0"));
+    lFilterDialog.kernelWidget->item(2,1)->setText(QString("0"));
+    lFilterDialog.kernelWidget->item(2,2)->setText(QString("0"));
+}
 
 /*
 TODO LIST
 
 Transform pixel:
- - Reset
+ - Reset DONE
  - Acabar el random
 
 Linear filter:
- - Reset
- - Bordes horizontales ((-1 0 1), (-2 0 2), (-1 0 1))
- - Bordes verticales ((-1 -2 -1), (0 0 0), (1 2 1))
+ - Reset DONE
+ - Bordes horizontales ((-1 0 1), (-2 0 2), (-1 0 1)) DONE
+ - Bordes verticales ((-1 -2 -1), (0 0 0), (1 2 1)) DONE
  - Random
 
 EXTRA

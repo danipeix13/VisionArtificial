@@ -16,7 +16,7 @@
   <widget class="QPushButton" name="okButton">
    <property name="geometry">
     <rect>
-     <x>150</x>
+     <x>60</x>
      <y>220</y>
      <width>91</width>
      <height>31</height>
@@ -104,23 +104,23 @@
    <attribute name="horizontalHeaderVisible">
     <bool>false</bool>
    </attribute>
+   <attribute name="horizontalHeaderMinimumSectionSize">
+    <number>30</number>
+   </attribute>
    <attribute name="horizontalHeaderDefaultSectionSize">
     <number>70</number>
    </attribute>
    <attribute name="horizontalHeaderHighlightSections">
     <bool>true</bool>
    </attribute>
-   <attribute name="horizontalHeaderMinimumSectionSize">
-    <number>30</number>
-   </attribute>
    <attribute name="verticalHeaderVisible">
     <bool>false</bool>
    </attribute>
-   <attribute name="verticalHeaderDefaultSectionSize">
-    <number>50</number>
-   </attribute>
    <attribute name="verticalHeaderMinimumSectionSize">
     <number>30</number>
+   </attribute>
+   <attribute name="verticalHeaderDefaultSectionSize">
+    <number>50</number>
    </attribute>
    <row>
     <property name="text">
@@ -236,6 +236,45 @@
      <set>AlignCenter</set>
     </property>
    </item>
+  </widget>
+  <widget class="QPushButton" name="horizontalBtn">
+   <property name="geometry">
+    <rect>
+     <x>270</x>
+     <y>150</y>
+     <width>91</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>horizontal</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="verticalBtn">
+   <property name="geometry">
+    <rect>
+     <x>270</x>
+     <y>190</y>
+     <width>91</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>vertical</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="resetBtn">
+   <property name="geometry">
+    <rect>
+     <x>270</x>
+     <y>230</y>
+     <width>91</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>reset</string>
+   </property>
   </widget>
  </widget>
  <tabstops>
