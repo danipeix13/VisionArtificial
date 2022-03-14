@@ -91,11 +91,6 @@ void MainWindow::compute()
     //Método que llame al switch
     selectOperation(option,src,dst);
 
-    if(ui->operOrderButton->isActiveWindow())
-    {
-        applySeveral(src,dst);
-    }
-
     //Actualización de los visores
      if(!ui->colorButton->isChecked())
      {
@@ -387,8 +382,11 @@ void MainWindow::selectOperation(int option, Mat src,Mat &dst)
     case 7: //sobre la misma imagen
         erode(src, dst);
         break;
+    case 8:
+        applySeveral(src, dst);
+        break;
     default:
-        printf("APRENDE A ESCRIBIR BIEN");
+        printf("Unimplemented operation");
     }
 }
 void MainWindow::applySeveral(Mat src, Mat &dst)
@@ -398,25 +396,25 @@ void MainWindow::applySeveral(Mat src, Mat &dst)
     if(operOrderDialog.firstOperCheckBox->isChecked())
     {
         option = operOrderDialog.operationComboBox1->currentIndex();
-        selectOperation(option,dst,dst);
-    }
-    else
+        selectOperation(option,src,dst);
+
         if(operOrderDialog.secondOperCheckBox->isChecked())
         {
             option = operOrderDialog.operationComboBox2->currentIndex();
             selectOperation(option,dst,dst);
-        }
-         else
+
             if(operOrderDialog.thirdOperCheckBox->isChecked())
             {
                 option = operOrderDialog.operationComboBox3->currentIndex();
                 selectOperation(option,dst,dst);
-            }
-            else
+
                 if(operOrderDialog.fourthOperCheckBox->isChecked())
                 {
                     option = operOrderDialog.operationComboBox4->currentIndex();
                     selectOperation(option,dst,dst);
                 }
+            }
+        }
+    }
 }
 
