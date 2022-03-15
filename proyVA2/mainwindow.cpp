@@ -54,7 +54,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(lFilterDialog.sharpenBtn,SIGNAL(clicked()),this,SLOT(setSharpenKernel()));
     connect(lFilterDialog.randomBtn,SIGNAL(clicked()),this,SLOT(setRandomKernel()));
 
-
     timer.start(30);
 }
 
@@ -257,10 +256,7 @@ void MainWindow::pixelTransformation(Mat src, Mat &dst)
         s3 = pixelTDialog.grayTransformW->item(3, 1)->text().toInt();
 
     std::vector<uchar> lut = fillLutTable(r0, s0, r1, s1, r2, s2, r3, s3);
-//    for(int i = 0; i < 256; i++)
-//        qDebug() << i << " - " << lut[i];
     cv::LUT(src, lut, dst);
-
 }
 
 std::vector<uchar> MainWindow::fillLutTable(int r0, int s0, int r1, int s1, int r2, int s2, int r3, int s3)
@@ -308,14 +304,12 @@ void MainWindow::equalize(Mat src, Mat &dst)
 
 void MainWindow::gaussianBlur(Mat src, Mat &dst)
 {
-    //TODO : Color?
     int w = ui->gaussWidthBox->value();
     cv::GaussianBlur(src, dst, Size(w, w), w/5);
 }
 
 void MainWindow::medianBlur(Mat src, Mat &dst)
 {
-    //TODO : Color?
     cv::medianBlur(src, dst, 3);
 }
 
@@ -325,6 +319,7 @@ void MainWindow::dilate(Mat src, Mat &dst)
         thresholding(src, dst);
     else
         thresholding(auxMat, dst);
+
     Mat kernel = Mat();
     cv::dilate(dst, dst, kernel);
     auxMat = dst;
@@ -336,6 +331,7 @@ void MainWindow::erode(Mat src, Mat &dst)
         thresholding(src, dst);
     else
         thresholding(auxMat, dst);
+
     Mat kernel = Mat();
     cv::erode(dst, dst, kernel);
     auxMat = dst;
@@ -343,7 +339,6 @@ void MainWindow::erode(Mat src, Mat &dst)
 
 void MainWindow::linearFilter(Mat src, Mat &dst)
 {
-
     int aa = lFilterDialog.kernelWidget->item(0, 0)->text().toInt(),
         ab = lFilterDialog.kernelWidget->item(0, 1)->text().toInt(),
         ac = lFilterDialog.kernelWidget->item(0, 2)->text().toInt(),
@@ -399,10 +394,10 @@ void MainWindow::selectOperation(int option, Mat src,Mat &dst)
     case 5:
         linearFilter(src, dst);
         break;
-    case 6: //sobre la misma imagen
+    case 6:
         dilate(src, dst);
         break;
-    case 7: //sobre la misma imagen
+    case 7:
         erode(src, dst);
         break;
     case 8:
@@ -521,13 +516,6 @@ void MainWindow::setRandomKernel()
         for (int j = 0; j < 3; j++)
             lFilterDialog.kernelWidget->item(i, j)->setText(QString(std::to_string(rand() % 8 - 3).c_str()));
 }
-
-/*
-    TODO LIST
-
-    - Seleccion aleatoria de canales
-    -
-*/
 
 
 
