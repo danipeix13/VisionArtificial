@@ -451,7 +451,6 @@ void MainWindow::setLutNegative()
 
 void MainWindow::setLutFreestyle()
 {
-    std::cout << "CACA" << std::endl;
     for (int i = 0; i < 4; i++)
         pixelTDialog.grayTransformW->item(i, 1)->setText(QString(std::to_string(rand() % 255).c_str()));
 }
@@ -522,6 +521,13 @@ void MainWindow::setRandomKernel()
         for (int j = 0; j < 3; j++)
             lFilterDialog.kernelWidget->item(i, j)->setText(QString(std::to_string(rand() % 8 - 3).c_str()));
 }
+
+/*
+    TODO LIST
+
+    - Seleccion aleatoria de canales
+    -
+*/
 
 
 
