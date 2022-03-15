@@ -39,6 +39,8 @@ private:
     bool winSelected;
     Rect imageWindow;
 
+    void copyWindow();
+
 
 public slots:
     void compute();
@@ -46,6 +48,8 @@ public slots:
     void change_color_gray(bool color);
     void selectWindow(QPointF p, int w, int h);
     void deselectWindow(QPointF p);
+    void addObject();
+    void deleteObject();
 
 };
 

@@ -25,6 +25,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->colorButton,SIGNAL(clicked(bool)),this,SLOT(change_color_gray(bool)));
     connect(visorS,SIGNAL(mouseSelection(QPointF, int, int)),this,SLOT(selectWindow(QPointF, int, int)));
     connect(visorS,SIGNAL(mouseClic(QPointF)),this,SLOT(deselectWindow(QPointF)));
+
+    connect(ui->addObjBtn,SIGNAL(clicked()),this,SLOT(addObject()));
+    connect(ui->delObjBtn,SIGNAL(clicked()),this,SLOT(deleteObject()));
     timer.start(30);
 }
 
@@ -64,7 +67,7 @@ void MainWindow::compute()
 
     visorS->update();
     visorD->update();
-
+start_stop_capture
 }
 
 void MainWindow::start_stop_capture(bool start)
@@ -119,6 +122,36 @@ void MainWindow::deselectWindow(QPointF p)
 {
     std::ignore = p;
     winSelected = false;
+}
+
+void MainWindow::copyWindow()
+{
+    if(winSelected)
+    {
+        Mat copyWindow, destImage;
+        int x = (320 - imageWindow.width) / 2, y = (240 - imageWindow.height) / 2;
+
+        destColorImage.setTo(0);
+        destGrayImage.setTo(0);
+
+        copyWindow = Mat(colorImage,imageWindow);
+        destImage = Mat(destColorImage, Rect(x, y, imageWindow.width, imageWindow.height));
+        copyWindow.copyTo(destImage);
+
+        copyWindow = Mat(grayImage,imageWindow);
+        destImage = Mat(destGrayImage, Rect(x, y, imageWindow.width, imageWindow.height));
+        copyWindow.copyTo(destImage);
+    }
+}
+
+void MainWindow::addObject()
+{
+
+}
+
+void MainWindow::deleteObject()
+{
+
 }
 
 

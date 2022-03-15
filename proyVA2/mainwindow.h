@@ -77,10 +77,9 @@ private:
 
     VideoCapture *cap;
     ImgViewer *visorS, *visorD, *visorHistoS, *visorHistoD;
-    Mat colorImage, grayImage, destColorImage, destGrayImage, auxMat;
+    Mat colorImage, grayImage, destColorImage, destGrayImage;
     bool winSelected;
     Rect imageWindow;
-    int lastOption;
 
     void updateHistograms(Mat image, ImgViewer * visor);
     void pixelTransformation(Mat src, Mat &dst);

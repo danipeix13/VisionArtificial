@@ -23,9 +23,6 @@ MainWindow::MainWindow(QWidget *parent) :
     visorHistoS = new ImgViewer(260,150, (QImage *) NULL, ui->histoFrameS);
     visorHistoD = new ImgViewer(260,150, (QImage *) NULL, ui->histoFrameD);
 
-    auxMat = Mat();
-    lastOption = -1;
-
     connect(&timer,SIGNAL(timeout()),this,SLOT(compute()));
     connect(ui->captureButton,SIGNAL(clicked(bool)),this,SLOT(start_stop_capture(bool)));
     connect(ui->colorButton,SIGNAL(clicked(bool)),this,SLOT(change_color_gray(bool)));
@@ -89,9 +86,6 @@ void MainWindow::compute()
 
     //En este punto se debe incluir el código asociado con el procesamiento de cada captura
     int option = ui->operationComboBox->currentIndex();
-    if (option != lastOption)
-        auxMat = Mat();
-    lastOption = option;
 
     Mat src, dst;
     if(ui->colorButton->isChecked())
@@ -315,26 +309,18 @@ void MainWindow::medianBlur(Mat src, Mat &dst)
 
 void MainWindow::dilate(Mat src, Mat &dst)
 {
-    if (auxMat.empty())
-        thresholding(src, dst);
-    else
-        thresholding(auxMat, dst);
+    thresholding(src, dst);
 
     Mat kernel = Mat();
     cv::dilate(dst, dst, kernel);
-    auxMat = dst;
 }
 
 void MainWindow::erode(Mat src, Mat &dst)
 {
-    if (auxMat.empty())
-        thresholding(src, dst);
-    else
-        thresholding(auxMat, dst);
+    thresholding(src, dst);
 
     Mat kernel = Mat();
     cv::erode(dst, dst, kernel);
-    auxMat = dst;
 }
 
 void MainWindow::linearFilter(Mat src, Mat &dst)

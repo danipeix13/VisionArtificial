@@ -96,7 +96,7 @@
     <string>Add Object Image</string>
    </property>
    <property name="checkable">
-    <bool>true</bool>
+    <bool>false</bool>
    </property>
    <property name="checked">
     <bool>false</bool>
@@ -115,7 +115,7 @@
     <string>Del Object Image</string>
    </property>
    <property name="checkable">
-    <bool>true</bool>
+    <bool>false</bool>
    </property>
    <property name="checked">
     <bool>false</bool>
@@ -133,6 +133,9 @@
    <property name="text">
     <string>Select Object</string>
    </property>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
+   </property>
   </widget>
   <widget class="QComboBox" name="boxObj">
    <property name="geometry">
@@ -142,6 +145,9 @@
      <width>171</width>
      <height>25</height>
     </rect>
+   </property>
+   <property name="editable">
+    <bool>true</bool>
    </property>
   </widget>
  </widget>
