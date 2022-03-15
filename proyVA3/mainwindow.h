@@ -12,7 +12,7 @@
 
 #include <imgviewer.h>
 
-
+#include <opencv2/features2d.hpp>
 
 using namespace cv;
 
@@ -38,6 +38,8 @@ private:
     Mat destColorImage, destGrayImage;
     bool winSelected;
     Rect imageWindow;
+    std::vector<std::vector<std::vector<KeyPoint>>> objectKP;
+    std::vector<std::vector<Mat>> objectDesc;
 
     void copyWindow();
 

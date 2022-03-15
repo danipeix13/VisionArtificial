@@ -67,7 +67,6 @@ void MainWindow::compute()
 
     visorS->update();
     visorD->update();
-start_stop_capture
 }
 
 void MainWindow::start_stop_capture(bool start)
@@ -131,12 +130,7 @@ void MainWindow::copyWindow()
         Mat copyWindow, destImage;
         int x = (320 - imageWindow.width) / 2, y = (240 - imageWindow.height) / 2;
 
-        destColorImage.setTo(0);
         destGrayImage.setTo(0);
-
-        copyWindow = Mat(colorImage,imageWindow);
-        destImage = Mat(destColorImage, Rect(x, y, imageWindow.width, imageWindow.height));
-        copyWindow.copyTo(destImage);
 
         copyWindow = Mat(grayImage,imageWindow);
         destImage = Mat(destGrayImage, Rect(x, y, imageWindow.width, imageWindow.height));
@@ -146,6 +140,24 @@ void MainWindow::copyWindow()
 
 void MainWindow::addObject()
 {
+    copyWindow();
+    std::vector<float> scaleFactors = {0.75, 1, 1.25};
+    Mat matAux;
+    std::vector<KeyPoint> kpAux;
+    std::vector<Mat> descAux;
+
+    for (float factor : scaleFactors)
+    {
+        cv::resize(destGrayImage, matAux, Size(), factor, factor);
+        Feature2D::detectAndCompute(matAux, Mat(), kpAux, descAux);
+        objectKP
+        objectDesc
+        //  detectAndCompute (o por separado) d ORB
+        //  añadir a la colección los descriptores con el add de BFMatcher
+
+    }
+
+
 
 }
 
