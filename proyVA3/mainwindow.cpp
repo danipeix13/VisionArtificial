@@ -22,13 +22,20 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(&timer,SIGNAL(timeout()),this,SLOT(compute()));
     connect(ui->captureButton,SIGNAL(clicked(bool)),this,SLOT(start_stop_capture(bool)));
-    connect(ui->colorButton,SIGNAL(clicked(bool)),this,SLOT(change_color_gray(bool)));
     connect(visorS,SIGNAL(mouseSelection(QPointF, int, int)),this,SLOT(selectWindow(QPointF, int, int)));
     connect(visorS,SIGNAL(mouseClic(QPointF)),this,SLOT(deselectWindow(QPointF)));
 
     connect(ui->addObjBtn,SIGNAL(clicked()),this,SLOT(addObject()));
     connect(ui->delObjBtn,SIGNAL(clicked()),this,SLOT(deleteObject()));
     timer.start(30);
+
+    ui->boxObj->addItem(QString("Object 1"));
+    ui->boxObj->addItem(QString("Object 2"));
+    ui->boxObj->addItem(QString("Object 3"));
+    orbDetector = ORB::create();
+    matcher = BFMatcher::create(NORM_HAMMING);
+
+    //ACTUALIZAR COLECCION: BORRAR ENTERA (matcher->clear() y for add(objectDest[i]))
 }
 
 MainWindow::~MainWindow()
@@ -77,22 +84,6 @@ void MainWindow::start_stop_capture(bool start)
         ui->captureButton->setText("Start capture");
 }
 
-void MainWindow::change_color_gray(bool color)
-{
-    if(color)
-    {
-        ui->colorButton->setText("Gray image");
-        visorS->setImage(&colorImage);
-        visorD->setImage(&destColorImage);
-    }
-    else
-    {
-        ui->colorButton->setText("Color image");
-        visorS->setImage(&grayImage);
-        visorD->setImage(&destGrayImage);
-    }
-}
-
 void MainWindow::selectWindow(QPointF p, int w, int h)
 {
     QPointF pEnd;
@@ -123,7 +114,7 @@ void MainWindow::deselectWindow(QPointF p)
     winSelected = false;
 }
 
-void MainWindow::copyWindow()
+Mat MainWindow::copyWindow()
 {
     if(winSelected)
     {
@@ -135,29 +126,58 @@ void MainWindow::copyWindow()
         copyWindow = Mat(grayImage,imageWindow);
         destImage = Mat(destGrayImage, Rect(x, y, imageWindow.width, imageWindow.height));
         copyWindow.copyTo(destImage);
+        return destImage;
     }
+    else
+        return Mat();
 }
 
 void MainWindow::addObject()
 {
-    copyWindow();
-    std::vector<float> scaleFactors = {0.75, 1, 1.25};
-    Mat matAux;
-    std::vector<KeyPoint> kpAux;
-    std::vector<Mat> descAux;
+    //XAux: std::vector<std::vector<X>>
+    //XScale: std::vector<X>
 
-    for (float factor : scaleFactors)
+    Mat matAux = copyWindow();
+    if (!matAux.empty())
     {
-        cv::resize(destGrayImage, matAux, Size(), factor, factor);
-        Feature2D::detectAndCompute(matAux, Mat(), kpAux, descAux);
-        objectKP
-        objectDesc
-        //  detectAndCompute (o por separado) d ORB
-        //  añadir a la colección los descriptores con el add de BFMatcher
+        std::vector<float> scaleFactors = {0.75, 1.0, 1.25};
+
+        std::vector<KeyPoint> kpScale;
+        std::vector<std::vector<KeyPoint>>kpObject;
+        Mat descScale;
+        std::vector<Mat> descObject;
+
+        bool invalid = false;
+        for (float factor : scaleFactors)
+        {
+            if (invalid)
+                break;
+            cv::resize(matAux, matAux, Size(), factor, factor);
+            orbDetector->detectAndCompute(matAux, Mat(), kpScale, descScale);
+            if (kpScale.size() > 0)
+            {
+                kpObject.push_back(kpScale);
+                descObject.push_back(descScale);
+            }
+            else
+                invalid = true;
+        }
+        if (invalid)
+        {
+            std::cout << "NO KP WERE DETECTED" << std::endl;
+            return;
+        }
+
+        int objectIndex = ui->boxObj->currentIndex();
+        objectKP.push_back(kpObject);
+        objectDesc.push_back(descObject);
+
+        matcher->clear();
+        for (auto &&element : objectDesc)
+            matcher->add(element);
+        std::cout << "ITEM INSERTED" << std::endl;
 
     }
-
-
 
 }
 

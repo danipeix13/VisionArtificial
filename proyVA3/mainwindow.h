@@ -11,7 +11,6 @@
 #include <opencv2/calib3d/calib3d.hpp>
 
 #include <imgviewer.h>
-
 #include <opencv2/features2d.hpp>
 
 using namespace cv;
@@ -38,16 +37,19 @@ private:
     Mat destColorImage, destGrayImage;
     bool winSelected;
     Rect imageWindow;
-    std::vector<std::vector<std::vector<KeyPoint>>> objectKP;
-    std::vector<std::vector<Mat>> objectDesc;
 
-    void copyWindow();
+    std::vector<std::vector<std::vector<KeyPoint>>> objectKP; //Acceso: objectKP[objeto][escala] --> std::vector<KeyPoint> (keypoints)
+    std::vector<std::vector<Mat>> objectDesc; //Acceso: objectDesc[objeto][escala] --> Mat(descriptor)
+
+    Ptr<ORB> orbDetector;
+    Ptr<BFMatcher> matcher;
+
+    Mat copyWindow();
 
 
 public slots:
     void compute();
     void start_stop_capture(bool start);
-    void change_color_gray(bool color);
     void selectWindow(QPointF p, int w, int h);
     void deselectWindow(QPointF p);
     void addObject();

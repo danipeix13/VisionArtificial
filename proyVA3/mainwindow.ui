@@ -64,25 +64,6 @@
     <bool>true</bool>
    </property>
   </widget>
-  <widget class="QPushButton" name="colorButton">
-   <property name="geometry">
-    <rect>
-     <x>740</x>
-     <y>60</y>
-     <width>171</width>
-     <height>31</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Color Image</string>
-   </property>
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>false</bool>
-   </property>
-  </widget>
   <widget class="QPushButton" name="addObjBtn">
    <property name="geometry">
     <rect>
@@ -148,6 +129,18 @@
    </property>
    <property name="editable">
     <bool>true</bool>
+   </property>
+   <property name="currentText">
+    <string/>
+   </property>
+   <property name="currentIndex">
+    <number>-1</number>
+   </property>
+   <property name="maxVisibleItems">
+    <number>3</number>
+   </property>
+   <property name="maxCount">
+    <number>3</number>
    </property>
   </widget>
  </widget>
