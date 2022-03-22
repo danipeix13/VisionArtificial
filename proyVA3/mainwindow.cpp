@@ -27,13 +27,19 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->addObjBtn,SIGNAL(clicked()),this,SLOT(addObject()));
     connect(ui->delObjBtn,SIGNAL(clicked()),this,SLOT(deleteObject()));
+
+    ui->boxObj->addItem(QString("(EMPTY)"));
+    ui->boxObj->addItem(QString("(EMPTY)"));
+    ui->boxObj->addItem(QString("(EMPTY)"));
+
+    connect(ui->boxObj,SIGNAL(currentIndexChanged(int)),this,SLOT(showImage(int)));
+
     timer.start(30);
 
-    ui->boxObj->addItem(QString("Object 1"));
-    ui->boxObj->addItem(QString("Object 2"));
-    ui->boxObj->addItem(QString("Object 3"));
     orbDetector = ORB::create();
     matcher = BFMatcher::create(NORM_HAMMING);
+
+    images.resize(3);
 
     //ACTUALIZAR COLECCION: BORRAR ENTERA (matcher->clear() y for add(objectDest[i]))
 }
@@ -124,8 +130,11 @@ Mat MainWindow::copyWindow()
         destGrayImage.setTo(0);
 
         copyWindow = Mat(grayImage,imageWindow);
-        destImage = Mat(destGrayImage, Rect(x, y, imageWindow.width, imageWindow.height));
+        std::cout << "1"<< std::endl;
+        destImage = Mat(destGrayImage, Rect(x, y, imageWindow.width, imageWindow.height));//peta segunda imagen
+        std::cout << "2"<< std::endl;
         copyWindow.copyTo(destImage);
+        std::cout << "3"<< std::endl;
         return destImage;
     }
     else
@@ -136,10 +145,19 @@ void MainWindow::addObject()
 {
     //XAux: std::vector<std::vector<X>>
     //XScale: std::vector<X>
+    std::cout << images.size() << std::endl;
 
+    ui->boxObj->setItemText(ui->boxObj->currentIndex(),ui->boxObj->currentText());
+
+    std::cout << "before copywindow"<< std::endl;
     Mat matAux = copyWindow();
+    std::cout << ui->boxObj->currentIndex() << std::endl;
+
+    //images.push_back(matAux);
+
     if (!matAux.empty())
     {
+        images[ui->boxObj->currentIndex()] = matAux;
         std::vector<float> scaleFactors = {0.75, 1.0, 1.25};
 
         std::vector<KeyPoint> kpScale;
@@ -168,7 +186,7 @@ void MainWindow::addObject()
             return;
         }
 
-        int objectIndex = ui->boxObj->currentIndex();
+        //int objectIndex = ui->boxObj->currentIndex();
         objectKP.push_back(kpObject);
         objectDesc.push_back(descObject);
 
@@ -176,14 +194,18 @@ void MainWindow::addObject()
         for (auto &&element : objectDesc)
             matcher->add(element);
         std::cout << "ITEM INSERTED" << std::endl;
-
     }
-
 }
 
 void MainWindow::deleteObject()
 {
 
+}
+
+void MainWindow::showImage(int index)
+{
+    std::cout << "CACA" << std::endl;
+    images.at(index).copyTo(destGrayImage);
 }
 
 

@@ -12,6 +12,9 @@
 
 #include <imgviewer.h>
 #include <opencv2/features2d.hpp>
+#include <iostream>
+#include <vector>
+#include <array>
 
 using namespace cv;
 
@@ -37,6 +40,7 @@ private:
     Mat destColorImage, destGrayImage;
     bool winSelected;
     Rect imageWindow;
+    std::vector<Mat> images;
 
     std::vector<std::vector<std::vector<KeyPoint>>> objectKP; //Acceso: objectKP[objeto][escala] --> std::vector<KeyPoint> (keypoints)
     std::vector<std::vector<Mat>> objectDesc; //Acceso: objectDesc[objeto][escala] --> Mat(descriptor)
@@ -54,7 +58,7 @@ public slots:
     void deselectWindow(QPointF p);
     void addObject();
     void deleteObject();
-
+    void showImage(int index);
 };
 
 
