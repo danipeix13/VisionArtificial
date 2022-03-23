@@ -41,6 +41,7 @@ private:
     bool winSelected;
     Rect imageWindow;
     std::vector<Mat> images;
+    std::vector<int> collect2object;
 
     std::vector<std::vector<std::vector<KeyPoint>>> objectKP; //Acceso: objectKP[objeto][escala] --> std::vector<KeyPoint> (keypoints)
     std::vector<std::vector<Mat>> objectDesc; //Acceso: objectDesc[objeto][escala] --> Mat(descriptor)
@@ -50,7 +51,6 @@ private:
 
     Mat copyWindow();
 
-
 public slots:
     void compute();
     void start_stop_capture(bool start);
@@ -59,6 +59,7 @@ public slots:
     void addObject();
     void deleteObject();
     void showImage(int index);
+    void collectionMatching();
 };
 
 

@@ -28,9 +28,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->addObjBtn,SIGNAL(clicked()),this,SLOT(addObject()));
     connect(ui->delObjBtn,SIGNAL(clicked()),this,SLOT(deleteObject()));
 
-    ui->boxObj->addItem(QString("(EMPTY)"));
-    ui->boxObj->addItem(QString("(EMPTY)"));
-    ui->boxObj->addItem(QString("(EMPTY)"));
+    ui->boxObj->addItem(QString("[EMPTY]"));
+    ui->boxObj->addItem(QString("[EMPTY]"));
+    ui->boxObj->addItem(QString("[EMPTY]"));
 
     connect(ui->boxObj,SIGNAL(currentIndexChanged(int)),this,SLOT(showImage(int)));
 
@@ -71,7 +71,7 @@ void MainWindow::compute()
 
 
     //En este punto se debe incluir el código asociado con el procesamiento de cada captura
-
+    collectionMatching();
 
     //Actualización de los visores
 
@@ -124,18 +124,8 @@ Mat MainWindow::copyWindow()
 {
     if(winSelected)
     {
-        Mat copyWindow, destImage;
-        int x = (320 - imageWindow.width) / 2, y = (240 - imageWindow.height) / 2;
-
         destGrayImage.setTo(0);
-
-        copyWindow = Mat(grayImage,imageWindow);
-        std::cout << "1"<< std::endl;
-        destImage = Mat(destGrayImage, Rect(x, y, imageWindow.width, imageWindow.height));//peta segunda imagen
-        std::cout << "2"<< std::endl;
-        copyWindow.copyTo(destImage);
-        std::cout << "3"<< std::endl;
-        return destImage;
+        return Mat(grayImage,imageWindow);
     }
     else
         return Mat();
@@ -151,11 +141,12 @@ void MainWindow::addObject()
 
     std::cout << "before copywindow"<< std::endl;
     Mat matAux = copyWindow();
-    std::cout << ui->boxObj->currentIndex() << std::endl;
+    Mat detectionMat;
+    std::cout << "INDICE" << ui->boxObj->currentIndex() << std::endl;
 
     if (!matAux.empty())
     {
-        images[ui->boxObj->currentIndex()] = matAux;
+        matAux.copyTo(images[ui->boxObj->currentIndex()]);
         std::vector<float> scaleFactors = {0.75, 1.0, 1.25};
 
         std::vector<KeyPoint> kpScale;
@@ -163,13 +154,18 @@ void MainWindow::addObject()
         Mat descScale;
         std::vector<Mat> descObject;
 
+        qDebug() << "Dani tonto";
+
         bool invalid = false;
         for (float factor : scaleFactors)
         {
             if (invalid)
                 break;
-            cv::resize(matAux, matAux, Size(), factor, factor);
-            orbDetector->detectAndCompute(matAux, Mat(), kpScale, descScale);
+
+            qDebug() << "Dani tontisimo";
+            cv::resize(matAux, detectionMat, Size(), factor, factor);
+            orbDetector->detectAndCompute(detectionMat, Mat(), kpScale, descScale);
+
             if (kpScale.size() > 0)
             {
                 kpObject.push_back(kpScale);
@@ -178,43 +174,64 @@ void MainWindow::addObject()
             else
                 invalid = true;
         }
+
+        qDebug() << invalid;
         if (invalid)
         {
             std::cout << "NO KP WERE DETECTED" << std::endl;
-            return;
         }
-
-        //int objectIndex = ui->boxObj->currentIndex();
-        objectKP.push_back(kpObject);
-        objectDesc.push_back(descObject);
-
-        matcher->clear();
-        for (auto &&element : objectDesc)
-            matcher->add(element);
-        std::cout << "ITEM INSERTED" << std::endl;
+        else
+        {
+            int x = (320 - imageWindow.width) / 2, y = (240 - imageWindow.height) / 2;
+            Mat destImage = Mat(destGrayImage, Rect(x, y, imageWindow.width, imageWindow.height));
+            matAux.copyTo(destImage);            //int objectIndex = ui->boxObj->currentIndex();
+            //            objectKP.push_back(kpObject);
+            //            objectDesc.push_back(descObject);
+            objectKP.insert(objectKP.begin()+ui->boxObj->currentIndex(),kpObject);
+            objectDesc.insert(objectDesc.begin()+ui->boxObj->currentIndex(),descObject);
+            //            objectKP[ui->boxObj->currentIndex()] = kpObject;
+            //            objectDesc[ui->boxObj->currentIndex()] = descObject;
+            qDebug() << "Danii ultramegatonto";
+            matcher->clear();
+            for (auto &&element : objectDesc)
+                matcher->add(element);
+            std::cout << "ITEM INSERTED" << std::endl;
+        }
     }
 }
 
 void MainWindow::deleteObject()
 {
-
+    Mat mat = Mat();
+    mat.copyTo(images[ui->boxObj->currentIndex()]);
+    destGrayImage.setTo(0);
+    ui->boxObj->setItemText(ui->boxObj->currentIndex(),"[EMPTY]");
+    //Hasta aqui bien uwu
+    //    objectKP[ui->boxObj->currentIndex()] = std::vector<std::vector<KeyPoint>>();
+    //    objectDesc[ui->boxObj->currentIndex()] = std::vector<Mat>();
 }
 
 void MainWindow::showImage(int index)
 {
     Mat currentObject = images[index];
+    destGrayImage.setTo(0);
 
     if(!currentObject.empty())
     {
         int x = (320 - currentObject.cols) / 2, y = (240 - currentObject.rows) / 2;
-        //destGrayImage.setTo(0);
         currentObject.copyTo(Mat(destGrayImage, Rect(x, y, currentObject.cols, currentObject.rows)));
-        std::cout << "SHOOOOOOOOOOOOOOOOOOOW"<< std::endl;
-    }
-    else
-    {
-        destGrayImage.setTo(0);
     }
 }
 
+void MainWindow::collectionMatching()
+{
+    Mat imageDesc;
+    std::vector<KeyPoint> imageKp;
 
+    orbDetector->detectAndCompute(grayImage, Mat(), imageKp, imageDesc);
+    std::vector<std::vector<DMatch>> matches;
+    matcher->knnMatch(imageDesc, matches, 3);
+    qDebug() << matches.size();
+}
+//TODO
+// BORRAR DE OBJECT KP Y OBJECT DESC
