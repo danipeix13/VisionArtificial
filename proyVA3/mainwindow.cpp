@@ -153,8 +153,6 @@ void MainWindow::addObject()
     Mat matAux = copyWindow();
     std::cout << ui->boxObj->currentIndex() << std::endl;
 
-    //images.push_back(matAux);
-
     if (!matAux.empty())
     {
         images[ui->boxObj->currentIndex()] = matAux;
@@ -204,8 +202,19 @@ void MainWindow::deleteObject()
 
 void MainWindow::showImage(int index)
 {
-    std::cout << "CACA" << std::endl;
-    images.at(index).copyTo(destGrayImage);
+    Mat currentObject = images[index];
+
+    if(!currentObject.empty())
+    {
+        int x = (320 - currentObject.cols) / 2, y = (240 - currentObject.rows) / 2;
+        //destGrayImage.setTo(0);
+        currentObject.copyTo(Mat(destGrayImage, Rect(x, y, currentObject.cols, currentObject.rows)));
+        std::cout << "SHOOOOOOOOOOOOOOOOOOOW"<< std::endl;
+    }
+    else
+    {
+        destGrayImage.setTo(0);
+    }
 }
 
 
