@@ -139,7 +139,6 @@ void MainWindow::addObject()
 
     ui->boxObj->setItemText(ui->boxObj->currentIndex(),ui->boxObj->currentText());
 
-    std::cout << "before copywindow"<< std::endl;
     Mat matAux = copyWindow();
     Mat detectionMat;
     std::cout << "INDICE" << ui->boxObj->currentIndex() << std::endl;
@@ -154,15 +153,12 @@ void MainWindow::addObject()
         Mat descScale;
         std::vector<Mat> descObject;
 
-        qDebug() << "Dani tonto";
-
         bool invalid = false;
         for (float factor : scaleFactors)
         {
             if (invalid)
                 break;
 
-            qDebug() << "Dani tontisimo";
             cv::resize(matAux, detectionMat, Size(), factor, factor);
             orbDetector->detectAndCompute(detectionMat, Mat(), kpScale, descScale);
 
@@ -177,25 +173,18 @@ void MainWindow::addObject()
 
         qDebug() << invalid;
         if (invalid)
-        {
             std::cout << "NO KP WERE DETECTED" << std::endl;
-        }
         else
         {
             int x = (320 - imageWindow.width) / 2, y = (240 - imageWindow.height) / 2;
             Mat destImage = Mat(destGrayImage, Rect(x, y, imageWindow.width, imageWindow.height));
-            matAux.copyTo(destImage);            //int objectIndex = ui->boxObj->currentIndex();
-            //            objectKP.push_back(kpObject);
-            //            objectDesc.push_back(descObject);
+            matAux.copyTo(destImage);
             objectKP.insert(objectKP.begin()+ui->boxObj->currentIndex(),kpObject);
             objectDesc.insert(objectDesc.begin()+ui->boxObj->currentIndex(),descObject);
-            //            objectKP[ui->boxObj->currentIndex()] = kpObject;
-            //            objectDesc[ui->boxObj->currentIndex()] = descObject;
-            qDebug() << "Danii ultramegatonto";
+            collect2object.push_back(ui->boxObj->currentIndex());
             matcher->clear();
             for (auto &&element : objectDesc)
                 matcher->add(element);
-            std::cout << "ITEM INSERTED" << std::endl;
         }
     }
 }
@@ -205,10 +194,14 @@ void MainWindow::deleteObject()
     Mat mat = Mat();
     mat.copyTo(images[ui->boxObj->currentIndex()]);
     destGrayImage.setTo(0);
+    remove(collect2object.begin(), collect2object.end(), ui->boxObj->currentIndex());
     ui->boxObj->setItemText(ui->boxObj->currentIndex(),"[EMPTY]");
     //Hasta aqui bien uwu
-    //    objectKP[ui->boxObj->currentIndex()] = std::vector<std::vector<KeyPoint>>();
-    //    objectDesc[ui->boxObj->currentIndex()] = std::vector<Mat>();
+    objectKP[ui->boxObj->currentIndex()].clear();
+    objectDesc[ui->boxObj->currentIndex()].clear();
+    matcher->clear();
+    for (auto &&element : objectDesc)
+        matcher->add(element);
 }
 
 void MainWindow::showImage(int index)
@@ -228,10 +221,62 @@ void MainWindow::collectionMatching()
     Mat imageDesc;
     std::vector<KeyPoint> imageKp;
 
+    // OBTENER LOS MATCHES
     orbDetector->detectAndCompute(grayImage, Mat(), imageKp, imageDesc);
     std::vector<std::vector<DMatch>> matches;
     matcher->knnMatch(imageDesc, matches, 3);
     qDebug() << matches.size();
+
+
+    if (matches.size() > 0)
+    {
+        // ORDENAR LOS MATCHES
+        std::vector<std::vector<std::vector<DMatch>>> ordered_matches;
+        ordered_matches.resize(3);
+        for(int i = 0; i < ordered_matches.size(); i++)
+            ordered_matches[i].resize(3);
+
+        for (std::vector<DMatch> vec : matches)
+            for(DMatch m: vec)
+                if (m.distance <= 30)
+                {
+                    int objeto = collect2object[m.imgIdx / 3],
+                        escala = m.imgIdx % 3;
+                    ordered_matches[objeto][escala].push_back(m);
+                }
+
+        // ELEGIR MEJOR MACH
+        /*std::vector<std::vector<DMatch>> bestMatches;
+        for(int objeto = 0; objeto < 3; objeto++)
+                bestMatches.push_back(std::ranges::max_element(ordered_matches[objeto], [this](auto a, auto b){return a.size() < b.size();}));
+        std::vector<DMatch> bestMatch = std::ranges::max_element(bestMatches, [this](auto a, auto b){return a.size() < b.size();});*/
+        int maxMatchsNumber = -1, best_x, best_y;
+        for(int i = 0; i < 3; i++)
+            for(int j = 0; j < 3; j++)
+                if (escala.size() > maxMatchsNumber)
+                {
+                    maxMatchsNumber = escala.size();
+                    best_x = i;
+                    best_y = j;
+                }
+
+        // GENERAR CORRESPONDENCIA DE PUNTOS
+        std::vector<Point2f> imagePoints, objectPoints;
+        for(DMatch m : ordered_matches[best_x][best_y])
+        {
+            imagePoints.push_back(imageKp[m.queryIdx].pt);
+            objectPoints.push_back(objectKP[0][0][m.trainIdx].pt);
+        }
+
+        // OBTENER HOMOGRAFIA
+        Mat H = findHomography(objectPoints, imagePoints, LMEDS);
+
+        // APLICAR HOMOGRAFIA
+
+
+        // PINTAR RESULTADO
+    }
+
+
+
 }
-//TODO
-// BORRAR DE OBJECT KP Y OBJECT DESC

@@ -15,6 +15,8 @@
 #include <iostream>
 #include <vector>
 #include <array>
+#include <ranges>
+#include <iterator>
 
 using namespace cv;
 
