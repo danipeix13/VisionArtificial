@@ -146,7 +146,6 @@ void MainWindow::addObject()
     if (!matAux.empty())
     {
         matAux.copyTo(images[ui->boxObj->currentIndex()]);
-        std::vector<float> scaleFactors = {0.75, 1.0, 1.25};
 
         std::vector<KeyPoint> kpScale;
         std::vector<std::vector<KeyPoint>>kpObject;
@@ -250,33 +249,50 @@ void MainWindow::collectionMatching()
         for(int objeto = 0; objeto < 3; objeto++)
                 bestMatches.push_back(std::ranges::max_element(ordered_matches[objeto], [this](auto a, auto b){return a.size() < b.size();}));
         std::vector<DMatch> bestMatch = std::ranges::max_element(bestMatches, [this](auto a, auto b){return a.size() < b.size();});*/
+        qDebug() << "ANTES DE ORDENAR";
         int maxMatchsNumber = -1, best_x, best_y;
         for(int i = 0; i < 3; i++)
             for(int j = 0; j < 3; j++)
-                if (escala.size() > maxMatchsNumber)
+                if (ordered_matches[i][j].size() > maxMatchsNumber)
                 {
-                    maxMatchsNumber = escala.size();
+                    maxMatchsNumber = ordered_matches[i][j].size();
                     best_x = i;
                     best_y = j;
                 }
+        qDebug() << "DSPS DE ORDENAR";
 
         // GENERAR CORRESPONDENCIA DE PUNTOS
+        qDebug() << "GENERAR CORRESPONDENCIA DE PUNTOS";
         std::vector<Point2f> imagePoints, objectPoints;
         for(DMatch m : ordered_matches[best_x][best_y])
         {
-            imagePoints.push_back(imageKp[m.queryIdx].pt);
-            objectPoints.push_back(objectKP[0][0][m.trainIdx].pt);
+            //imagePoints.push_back(imageKp[m.queryIdx].pt);
+            //objectPoints.push_back(objectKP[best_x][best_y][m.trainIdx].pt);
         }
 
-        // OBTENER HOMOGRAFIA
+        // OBTENER Y APLICAR HOMOGRAFIA
+        qDebug() << "OBTENER Y APLICAR HOMOGRAFIA";
         Mat H = findHomography(objectPoints, imagePoints, LMEDS);
 
-        // APLICAR HOMOGRAFIA
+        Mat image = images[best_x];
+        int h = image.rows * scaleFactors[best_y], w = image.cols * scaleFactors[best_y];
 
+        std::vector<Point2f> imageCorners, objectCorners = {Point2f(0, 0), Point2f(w-1, 0), Point2f(w-1, h-1), Point2f(0, h-1)};
+        perspectiveTransform(objectCorners, imageCorners, H);
 
         // PINTAR RESULTADO
+        qDebug() << "PINTAR RESULTADO";
+        std::initializer_list<QPoint> object_draw = {QPoint(imageCorners[0].x, imageCorners[0].y),
+                                                        QPoint(imageCorners[1].x, imageCorners[1].y),
+                                                        QPoint(imageCorners[2].x, imageCorners[2].y),
+                                                        QPoint(imageCorners[3].x, imageCorners[3].y)};
+
+//        QPolygonF object_polygon = QPolygonF(QVector<QPointF>(object_draw));
+        visorS->drawPolyLine(QVector<QPoint>(object_draw), Qt::red);
     }
-
-
-
 }
+// TODO
+/*
+    Para calcular la homografñia se necesitan un mínimo de puntos: comprobar
+    For each raro
+*/

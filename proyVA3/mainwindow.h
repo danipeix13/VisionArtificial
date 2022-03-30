@@ -1,3 +1,5 @@
+
+
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
@@ -47,6 +49,7 @@ private:
 
     std::vector<std::vector<std::vector<KeyPoint>>> objectKP; //Acceso: objectKP[objeto][escala] --> std::vector<KeyPoint> (keypoints)
     std::vector<std::vector<Mat>> objectDesc; //Acceso: objectDesc[objeto][escala] --> Mat(descriptor)
+    std::vector<float> scaleFactors = {0.75, 1.0, 1.25};
 
     Ptr<ORB> orbDetector;
     Ptr<BFMatcher> matcher;
