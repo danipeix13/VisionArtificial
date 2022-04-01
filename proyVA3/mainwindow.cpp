@@ -222,78 +222,102 @@ void MainWindow::collectionMatching()
 
     // OBTENER LOS MATCHES
     orbDetector->detectAndCompute(grayImage, Mat(), imageKp, imageDesc);
-    std::vector<std::vector<DMatch>> matches;
-    matcher->knnMatch(imageDesc, matches, 3);
-
-    if (matches.size() > 0)
+    if(!imageKp.empty() and !imageDesc.empty())
     {
-        // ORDENAR LOS MATCHES
-        std::vector<std::vector<std::vector<DMatch>>> ordered_matches;
-        ordered_matches.resize(3);
-        for(int i = 0; i < ordered_matches.size(); i++)
-            ordered_matches[i].resize(3);
+        qDebug() << "IMAGAE KP AND IMAGEDESCK HAS VALUES";
+        std::vector<std::vector<DMatch>> matches;
+        matcher->knnMatch(imageDesc, matches, 3);
+        if (matches.size() > 0)
+        {
+            // ORDENAR LOS MATCHES
+            std::vector<std::vector<std::vector<DMatch>>> ordered_matches;
+            ordered_matches.resize(3);
+            for(int i = 0; i < ordered_matches.size(); i++)
+                ordered_matches[i].resize(3);
 
-        for (std::vector<DMatch> vec : matches)
-            for(DMatch m: vec)
-                if (m.distance <= 30)
-                {
-                    int objeto = collect2object[m.imgIdx / 3],
-                        escala = m.imgIdx % 3;
-                    ordered_matches[objeto][escala].push_back(m);
-                }
+            qDebug() << "236";
 
-        qDebug() << "DSPS de homografia";
-        // ELEGIR MEJOR MACH
-        /*std::vector<std::vector<DMatch>> bestMatches;
+            for (std::vector<DMatch> vec : matches)
+                for(DMatch m: vec)
+                    if (m.distance <= 30)
+                    {
+                        int objeto = collect2object[m.imgIdx / 3],
+                                escala = m.imgIdx % 3;
+                        ordered_matches[objeto][escala].push_back(m);
+                    }
+
+            qDebug() << "247";
+
+            // ELEGIR MEJOR MACH
+            /*std::vector<std::vector<DMatch>> bestMatches;
         for(int objeto = 0; objeto < 3; objeto++)
                 bestMatches.push_back(std::ranges::max_element(ordered_matches[objeto], [this](auto a, auto b){return a.size() < b.size();}));
         std::vector<DMatch> bestMatch = std::ranges::max_element(bestMatches, [this](auto a, auto b){return a.size() < b.size();});*/
 
-        int maxMatchsNumber = -1, best_x, best_y;
-        for(int i = 0; i < 3; i++)
-            for(int j = 0; j < 3; j++)
-                if (ordered_matches[i][j].size() > maxMatchsNumber)
+            int maxMatchsNumber = 0, best_x, best_y;
+            for(int i = 0; i < 3; i++)
+                for(int j = 0; j < 3; j++)
                 {
-                    maxMatchsNumber = ordered_matches[i][j].size();
-                    best_x = i;
-                    best_y = j;
-                    qDebug() << "bESTmATCH";
+                    //                qDebug() << "ordered_matches" << ordered_matches[i][j].size();
+                    //                qDebug() << "MaxMatchsNumber" << maxMatchsNumber;
+
+                    if (ordered_matches[i][j].size() > maxMatchsNumber)
+                    {
+                        maxMatchsNumber = ordered_matches[i][j].size();
+                        best_x = i;
+                        best_y = j;
+                        qDebug() << "bESTmATCH";
+                    }
                 }
-        qDebug() << "DSPS DE ORDENAR";
 
-        // GENERAR CORRESPONDENCIA DE PUNTOS
-        qDebug() << "GENERAR CORRESPONDENCIA DE PUNTOS";
-        std::vector<Point2f> imagePoints, objectPoints;
-        qDebug() << "WTF";
-        std::vector<DMatch> bestMatch = ordered_matches[best_x][best_y];
-        qDebug() << "MatchSize" << bestMatch.size();
-        for(DMatch m : bestMatch)
-        {
-            imagePoints.push_back(imageKp[m.queryIdx].pt);
-            objectPoints.push_back(objectKP[best_x][best_y][m.trainIdx].pt);
+            qDebug() << "271";
+
+            if(ordered_matches[best_x][best_y].size() > 10)
+            {
+                qDebug() << "DSPS DE ORDENAR";
+
+                // GENERAR CORRESPONDENCIA DE PUNTOS
+                qDebug() << "GENERAR CORRESPONDENCIA DE PUNTOS";
+                std::vector<Point2f> imagePoints, objectPoints;
+                qDebug() << "WTF";
+                std::vector<DMatch> bestMatch = ordered_matches[best_x][best_y];
+                qDebug() << "MatchSize" << bestMatch.size();
+
+
+                for(DMatch m : bestMatch)
+                {
+                    imagePoints.push_back(imageKp[m.queryIdx].pt);
+                    objectPoints.push_back(objectKP[best_x][best_y][m.trainIdx].pt);
+                }
+
+                // OBTENER Y APLICAR HOMOGRAFIA
+                qDebug() << "OBTENER Y APLICAR HOMOGRAFIA";
+                Mat H = findHomography(objectPoints, imagePoints, LMEDS);
+                qDebug() << "DSPS de homografia";
+
+                Mat image = images[best_x];
+                int h = image.rows * scaleFactors[best_y], w = image.cols * scaleFactors[best_y];
+
+                qDebug() << "H:" << h << "W:" << w;
+                std::vector<Point2f> imageCorners, objectCorners = {Point2f(0, 0), Point2f(w-1, 0), Point2f(w-1, h-1), Point2f(0, h-1)};
+                perspectiveTransform(objectCorners, imageCorners, H);
+
+                // PINTAR RESULTADO
+                qDebug() << "PINTAR RESULTADO";
+                std::initializer_list<QPoint> object_draw = {QPoint(imageCorners[0].x, imageCorners[0].y),
+                                                             QPoint(imageCorners[1].x, imageCorners[1].y),
+                                                             QPoint(imageCorners[2].x, imageCorners[2].y),
+                                                             QPoint(imageCorners[3].x, imageCorners[3].y),
+                                                             QPoint(imageCorners[0].x, imageCorners[0].y)};
+
+                //        QPolygonF object_polygon = QPolygonF(QVector<QPointF>(object_draw));
+                visorS->drawPolyLine(QVector<QPoint>(object_draw), Qt::red);
+            }
+            else
+                qInfo() << "NOT ENOUGH MATCHES";
         }
-
-        // OBTENER Y APLICAR HOMOGRAFIA
-        qDebug() << "OBTENER Y APLICAR HOMOGRAFIA";
-        Mat H = findHomography(objectPoints, imagePoints, LMEDS);
-        qDebug() << "DSPS de homografia";
-
-        Mat image = images[best_x];
-        int h = image.rows * scaleFactors[best_y], w = image.cols * scaleFactors[best_y];
-
-        qDebug() << "ANTES DE PERSPECTIVE TRANSFORM";
-        std::vector<Point2f> imageCorners, objectCorners = {Point2f(0, 0), Point2f(w-1, 0), Point2f(w-1, h-1), Point2f(0, h-1)};
-        perspectiveTransform(objectCorners, imageCorners, H);
-
-        // PINTAR RESULTADO
-        qDebug() << "PINTAR RESULTADO";
-        std::initializer_list<QPoint> object_draw = {QPoint(imageCorners[0].x, imageCorners[0].y),
-                                                        QPoint(imageCorners[1].x, imageCorners[1].y),
-                                                        QPoint(imageCorners[2].x, imageCorners[2].y),
-                                                        QPoint(imageCorners[3].x, imageCorners[3].y)};
-
-//        QPolygonF object_polygon = QPolygonF(QVector<QPointF>(object_draw));
-        visorS->drawPolyLine(QVector<QPoint>(object_draw), Qt::red);
+        else
+            qInfo() << "Matches Size = 0";
     }
 }
 // TODO
