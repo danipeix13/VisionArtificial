@@ -224,8 +224,6 @@ void MainWindow::collectionMatching()
     orbDetector->detectAndCompute(grayImage, Mat(), imageKp, imageDesc);
     std::vector<std::vector<DMatch>> matches;
     matcher->knnMatch(imageDesc, matches, 3);
-    qDebug() << matches.size();
-
 
     if (matches.size() > 0)
     {
@@ -244,12 +242,13 @@ void MainWindow::collectionMatching()
                     ordered_matches[objeto][escala].push_back(m);
                 }
 
+        qDebug() << "DSPS de homografia";
         // ELEGIR MEJOR MACH
         /*std::vector<std::vector<DMatch>> bestMatches;
         for(int objeto = 0; objeto < 3; objeto++)
                 bestMatches.push_back(std::ranges::max_element(ordered_matches[objeto], [this](auto a, auto b){return a.size() < b.size();}));
         std::vector<DMatch> bestMatch = std::ranges::max_element(bestMatches, [this](auto a, auto b){return a.size() < b.size();});*/
-        qDebug() << "ANTES DE ORDENAR";
+
         int maxMatchsNumber = -1, best_x, best_y;
         for(int i = 0; i < 3; i++)
             for(int j = 0; j < 3; j++)
@@ -258,25 +257,31 @@ void MainWindow::collectionMatching()
                     maxMatchsNumber = ordered_matches[i][j].size();
                     best_x = i;
                     best_y = j;
+                    qDebug() << "bESTmATCH";
                 }
         qDebug() << "DSPS DE ORDENAR";
 
         // GENERAR CORRESPONDENCIA DE PUNTOS
         qDebug() << "GENERAR CORRESPONDENCIA DE PUNTOS";
         std::vector<Point2f> imagePoints, objectPoints;
-        for(DMatch m : ordered_matches[best_x][best_y])
+        qDebug() << "WTF";
+        std::vector<DMatch> bestMatch = ordered_matches[best_x][best_y];
+        qDebug() << "MatchSize" << bestMatch.size();
+        for(DMatch m : bestMatch)
         {
-            //imagePoints.push_back(imageKp[m.queryIdx].pt);
-            //objectPoints.push_back(objectKP[best_x][best_y][m.trainIdx].pt);
+            imagePoints.push_back(imageKp[m.queryIdx].pt);
+            objectPoints.push_back(objectKP[best_x][best_y][m.trainIdx].pt);
         }
 
         // OBTENER Y APLICAR HOMOGRAFIA
         qDebug() << "OBTENER Y APLICAR HOMOGRAFIA";
         Mat H = findHomography(objectPoints, imagePoints, LMEDS);
+        qDebug() << "DSPS de homografia";
 
         Mat image = images[best_x];
         int h = image.rows * scaleFactors[best_y], w = image.cols * scaleFactors[best_y];
 
+        qDebug() << "ANTES DE PERSPECTIVE TRANSFORM";
         std::vector<Point2f> imageCorners, objectCorners = {Point2f(0, 0), Point2f(w-1, 0), Point2f(w-1, h-1), Point2f(0, h-1)};
         perspectiveTransform(objectCorners, imageCorners, H);
 
