@@ -239,51 +239,12 @@ void MainWindow::collectionMatching()
                 qDebug() << "DSPS DE ORDENAR";
 
                 std::vector<Point2f> imagePoints, objectPoints;
-<<<<<<< HEAD
+
                 pointsCorrespondence(ordered_matches[bestObject][bestScale], imageKp, bestObject, bestScale, imagePoints, objectPoints);
 
                 std::vector<Point2f> imageCorners = getAndApplyHomography(imagePoints, objectPoints, bestObject, bestScale);
 
                 paintResult(imageCorners);
-=======
-                qDebug() << "WTF";
-                std::vector<DMatch> bestMatch = ordered_matches[best_x][best_y];
-                qDebug() << "MatchSize" << bestMatch.size();
-
-
-                for(DMatch m : bestMatch)
-                {
-                    imagePoints.push_back(imageKp[m.queryIdx].pt);
-                    objectPoints.push_back(objectKP[best_x][best_y][m.trainIdx].pt);
-                }
-
-                // OBTENER Y APLICAR HOMOGRAFIA
-                qDebug() << "OBTENER Y APLICAR HOMOGRAFIA";
-                Mat H = findHomography(objectPoints, imagePoints, LMEDS);
-
-                if(!H.empty())
-                {
-                    qDebug() << "DSPS de homografia";
-
-                    Mat image = images[best_x];
-                    int h = image.rows * scaleFactors[best_y], w = image.cols * scaleFactors[best_y];
-
-                    qDebug() << "H:" << h << "W:" << w;
-                    std::vector<Point2f> imageCorners, objectCorners = {Point2f(0, 0), Point2f(w-1, 0), Point2f(w-1, h-1), Point2f(0, h-1)};
-                    perspectiveTransform(objectCorners, imageCorners, H);
-
-                    // PINTAR RESULTADO
-                    qDebug() << "PINTAR RESULTADO";
-                    std::initializer_list<QPoint> object_draw = {QPoint(imageCorners[0].x, imageCorners[0].y),
-                                                                 QPoint(imageCorners[1].x, imageCorners[1].y),
-                                                                 QPoint(imageCorners[2].x, imageCorners[2].y),
-                                                                 QPoint(imageCorners[3].x, imageCorners[3].y),
-                                                                 QPoint(imageCorners[0].x, imageCorners[0].y)};
-
-                    //        QPolygonF object_polygon = QPolygonF(QVector<QPointF>(object_draw));
-                    visorS->drawPolyLine(QVector<QPoint>(object_draw), Qt::red);
-                }
->>>>>>> 8adf6fe29a9bb7e938ec21e93f3478fffea10ee7
             }
             else
                 qInfo() << "NOT ENOUGH MATCHES";
