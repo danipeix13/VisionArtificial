@@ -223,7 +223,7 @@ void MainWindow::collectionMatching()
 
     if(!imageKp.empty() and !imageDesc.empty())
     {
-        qDebug() << "IMAGAE KP AND IMAGEDESCK HAS VALUES";
+        qDebug() << __FUNCTION__ << "IMAGAE KP AND IMAGEDESCK HAS VALUES";
         std::vector<std::vector<DMatch>> matches;
         matcher->knnMatch(imageDesc, matches, 3);
 
@@ -236,7 +236,7 @@ void MainWindow::collectionMatching()
 
             if(ordered_matches[bestObject][bestScale].size() > 10)
             {
-                qDebug() << "DSPS DE ORDENAR";
+                qDebug() << __FUNCTION__ << "DSPS DE ORDENAR";
 
                 std::vector<Point2f> imagePoints, objectPoints;
 
@@ -247,13 +247,13 @@ void MainWindow::collectionMatching()
                 paintResult(imageCorners);
             }
             else
-                qInfo() << "NOT ENOUGH MATCHES";
+                qInfo() << __FUNCTION__ << "NOT ENOUGH MATCHES";
         }
         else
-            qInfo() << "Matches Size = 0";
+            qInfo() << __FUNCTION__ << "Matches Size = 0";
     }
     else
-        qInfo() << "imageKP or imageDesc are empty";
+        qInfo() << __FUNCTION__ << "imageKP or imageDesc are empty";
 }
 
 std::vector<std::vector<std::vector<DMatch>>> MainWindow::orderMatches(std::vector<std::vector<DMatch>> matches)
@@ -263,7 +263,7 @@ std::vector<std::vector<std::vector<DMatch>>> MainWindow::orderMatches(std::vect
     for(int i = 0; i < ordered_matches.size(); i++)
         ordered_matches[i].resize(3);
 
-    qDebug() << "236";
+    qDebug() << __FUNCTION__ << "236";
 
     for (std::vector<DMatch> vec : matches)
         for(DMatch m: vec)
@@ -274,7 +274,7 @@ std::vector<std::vector<std::vector<DMatch>>> MainWindow::orderMatches(std::vect
                 ordered_matches[objeto][escala].push_back(m);
             }
 
-    qDebug() << "247";
+    qDebug() << __FUNCTION__ << "247";
     return ordered_matches;
 }
 
@@ -292,10 +292,10 @@ void MainWindow::bestMatch(std::vector<std::vector<std::vector<DMatch>>> ordered
                 maxMatchsNumber = ordered_matches[i][j].size();
                 bestObject = i;
                 bestScale = j;
-                qDebug() << "bESTmATCH";
+                qDebug() << __FUNCTION__ << "bESTmATCH";
             }
         }
-    qDebug() << "271";
+    qDebug() << __FUNCTION__ << "271";
     /*std::vector<std::vector<DMatch>> bestMatches;
     for(int objeto = 0; objeto < 3; objeto++)
         bestMatches.push_back(std::ranges::max_element(ordered_matches[objeto], [this](auto a, auto b){return a.size() < b.size();}));
@@ -305,8 +305,8 @@ void MainWindow::bestMatch(std::vector<std::vector<std::vector<DMatch>>> ordered
 void MainWindow::pointsCorrespondence(std::vector<DMatch> bestMatch, std::vector<KeyPoint> imageKp, int bestObject, int bestScale,
                                       std::vector<Point2f> &imagePoints, std::vector<Point2f> &objectPoints)
 {
-    qDebug() << "GENERAR CORRESPONDENCIA DE PUNTOS";
-    qDebug() << "MatchSize" << bestMatch.size();
+    qDebug() << __FUNCTION__ << "GENERAR CORRESPONDENCIA DE PUNTOS";
+    qDebug() << __FUNCTION__ << "MatchSize" << bestMatch.size();
 
 
     for(DMatch m : bestMatch)
@@ -318,14 +318,14 @@ void MainWindow::pointsCorrespondence(std::vector<DMatch> bestMatch, std::vector
 
 std::vector<Point2f> MainWindow::getAndApplyHomography(std::vector<Point2f> imagePoints, std::vector<Point2f> objectPoints, int bestObject, int bestScale)
 {
-    qDebug() << "OBTENER Y APLICAR HOMOGRAFIA";
+    qDebug() << __FUNCTION__ << "OBTENER Y APLICAR HOMOGRAFIA";
     Mat H = findHomography(objectPoints, imagePoints, LMEDS);
-    qDebug() << "DSPS de homografia";
+    qDebug() << __FUNCTION__ << "DSPS de homografia";
 
     Mat image = images[bestObject];
     int h = image.rows * scaleFactors[bestScale], w = image.cols * scaleFactors[bestScale];
 
-    qDebug() << "H:" << h << "W:" << w;
+    qDebug() << __FUNCTION__ << "H:" << h << "W:" << w;
     std::vector<Point2f> imageCorners, objectCorners = {Point2f(0, 0), Point2f(w-1, 0), Point2f(w-1, h-1), Point2f(0, h-1)};
     perspectiveTransform(objectCorners, imageCorners, H);
     return imageCorners;
@@ -333,7 +333,7 @@ std::vector<Point2f> MainWindow::getAndApplyHomography(std::vector<Point2f> imag
 
 void MainWindow::paintResult(std::vector<Point2f> imageCorners)
 {
-    qDebug() << "PINTAR RESULTADO";
+    qDebug() << __FUNCTION__ << "PINTAR RESULTADO";
     std::initializer_list<QPoint> object_draw = {QPoint(imageCorners[0].x, imageCorners[0].y),
                                                  QPoint(imageCorners[1].x, imageCorners[1].y),
                                                  QPoint(imageCorners[2].x, imageCorners[2].y),
