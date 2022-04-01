@@ -55,6 +55,13 @@ private:
     Ptr<BFMatcher> matcher;
 
     Mat copyWindow();
+    void collectionMatching();
+    std::vector<std::vector<std::vector<DMatch>>> orderMatches(std::vector<std::vector<DMatch>> matches);
+    void bestMatch(std::vector<std::vector<std::vector<DMatch>>> bestMatch, int &bestObject, int &bestScale);
+    void pointsCorrespondence(std::vector<DMatch> ordered_matches, std::vector<KeyPoint> imageKp, int bestObject,int bestScale,
+                              std::vector<Point2f> &imagePoints, std::vector<Point2f> &objectPoints);
+    std::vector<Point2f> getAndApplyHomography(std::vector<Point2f> imagePoints, std::vector<Point2f> objectPoints, int bestObject, int bestScale);
+    void paintResult(std::vector<Point2f> imageCorners);
 
 public slots:
     void compute();
@@ -64,7 +71,6 @@ public slots:
     void addObject();
     void deleteObject();
     void showImage(int index);
-    void collectionMatching();
 };
 
 
