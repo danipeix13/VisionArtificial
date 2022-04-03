@@ -21,7 +21,7 @@ MainWindow::MainWindow(QWidget *parent) :
     visorD = new ImgViewer(&destGrayImage, ui->imageFrameD);
 
     connect(&timer,SIGNAL(timeout()),this,SLOT(compute()));
-    connect(ui->captureButton,SIGNAL(clicked(bool)),this,SLOT(start_stop_capture(bool)));
+    //connect(ui->captureButton,SIGNAL(clicked(bool)),this,SLOT(start_stop_capture(bool)));
     connect(visorS,SIGNAL(mouseSelection(QPointF, int, int)),this,SLOT(selectWindow(QPointF, int, int)));
     connect(visorS,SIGNAL(mouseClic(QPointF)),this,SLOT(deselectWindow(QPointF)));
 
@@ -228,23 +228,32 @@ void MainWindow::collectionMatching()
         {
             std::vector<std::vector<std::vector<DMatch>>> ordered_matches = orderMatches(matches);
 
-            int bestObject, bestScale;
-            bestMatch(ordered_matches, bestObject, bestScale);
+            std::vector<int> bestObject, bestScale;
+            std::vector<Match> bestMatches;
+            bestMatch(ordered_matches, bestMatches);
 
-            if(ordered_matches[bestObject][bestScale].size() > 10)
+            for(int i = 0; i < images.size(); i++)
             {
-                qDebug() << __FUNCTION__ << "Hay más de 10 matches";
+                qDebug() << __FUNCTION__ << "Objeto" << i;
+                int objeto = bestMatches.at(i).i,  escala = bestMatches.at(i).j;
+                QColor color = colors.at(i);
 
-                std::vector<Point2f> imagePoints, objectPoints;
+                if(ordered_matches[objeto][escala].size() > 10)
+                {
+                    qDebug() << __FUNCTION__ << "Hay más de 10 matches";
 
-                pointsCorrespondence(ordered_matches[bestObject][bestScale], imageKp, bestObject, bestScale, imagePoints, objectPoints);
+                    std::vector<Point2f> imagePoints, objectPoints;
 
-                std::vector<Point2f> imageCorners = getAndApplyHomography(imagePoints, objectPoints, bestObject, bestScale);
+                    pointsCorrespondence(ordered_matches[objeto][escala], imageKp, objeto, escala, imagePoints, objectPoints);
 
-                paintResult(imageCorners);
+                    std::vector<Point2f> imageCorners = getAndApplyHomography(imagePoints, objectPoints, objeto, escala);
+
+                    paintResult(imageCorners, ui->boxObj->itemText(i), color);
+                }
+                else
+                    qInfo() << __FUNCTION__ << "No hay más de 10 matches";
             }
-            else
-                qInfo() << __FUNCTION__ << "No hay más de 10 matches";
+
         }
         else
             qInfo() << __FUNCTION__ << "No hay matches";
@@ -259,7 +268,7 @@ std::vector<std::vector<std::vector<DMatch>>> MainWindow::orderMatches(std::vect
     std::vector<std::vector<std::vector<DMatch>>> ordered_matches;
     ordered_matches.resize(3);
     for(int i = 0; i < ordered_matches.size(); i++)
-        ordered_matches[i].resize(3);
+        ordered_matches[i].resize(N_SCALES);
 
     qDebug() << __FUNCTION__ << "Ordena";
 
@@ -267,8 +276,8 @@ std::vector<std::vector<std::vector<DMatch>>> MainWindow::orderMatches(std::vect
         for(DMatch m: vec)
             if (m.distance <= 30)
             {
-                int objeto = collect2object[m.imgIdx / 3],
-                        escala = m.imgIdx % 3;
+                int objeto = collect2object[m.imgIdx / N_SCALES],
+                        escala = m.imgIdx % N_SCALES;
                 ordered_matches[objeto][escala].push_back(m);
             }
 
@@ -276,29 +285,17 @@ std::vector<std::vector<std::vector<DMatch>>> MainWindow::orderMatches(std::vect
     return ordered_matches;
 }
 
-void MainWindow::bestMatch(std::vector<std::vector<std::vector<DMatch>>> ordered_matches, int &bestObject, int &bestScale)
+void MainWindow::bestMatch(std::vector<std::vector<std::vector<DMatch>>> ordered_matches, std::vector<Match> &bestMatches)
 {
     qDebug() << __FUNCTION__ << "Entra";
-    int maxMatchsNumber = 0;
+    std::vector<Match> matchesToOrder;
     for(int i = 0; i < 3; i++)
-        for(int j = 0; j < 3; j++)
-        {
-            // qDebug() << "ordered_matches" << ordered_matches[i][j].size();
-            // qDebug() << "MaxMatchsNumber" << maxMatchsNumber;
-
-            if (ordered_matches[i][j].size() > maxMatchsNumber)
-            {
-                maxMatchsNumber = ordered_matches[i][j].size();
-                bestObject = i;
-                bestScale = j;
-                qDebug() << __FUNCTION__ << "Actualiza el mejor match";
-            }
-        }
+        for(int j = 0; j < N_SCALES; j++)
+            matchesToOrder.push_back(Match{ordered_matches[i][j].size(), i, j});
+    std::sort(matchesToOrder.begin(), matchesToOrder.end(), [](Match a, Match b){return a.size > b.size;});
+    for(int i = 0; i < images.size(); i++)
+        bestMatches.push_back(matchesToOrder.at(i));
     qDebug() << __FUNCTION__ << "Sale";
-    /*std::vector<std::vector<DMatch>> bestMatches;
-    for(int objeto = 0; objeto < 3; objeto++)
-        bestMatches.push_back(std::ranges::max_element(ordered_matches[objeto], [this](auto a, auto b){return a.size() < b.size();}));
-    std::vector<DMatch> bestMatch = std::ranges::max_element(bestMatches, [this](auto a, auto b){return a.size() < b.size();});*/
 }
 
 void MainWindow::pointsCorrespondence(std::vector<DMatch> bestMatch, std::vector<KeyPoint> imageKp, int bestObject, int bestScale,
@@ -332,7 +329,7 @@ std::vector<Point2f> MainWindow::getAndApplyHomography(std::vector<Point2f> imag
     return imageCorners;
 }
 
-void MainWindow::paintResult(std::vector<Point2f> imageCorners)
+void MainWindow::paintResult(std::vector<Point2f> imageCorners, QString name, QColor color)
 {
     qDebug() << __FUNCTION__ << "Entra";
     std::initializer_list<QPoint> object_draw = {QPoint(imageCorners[0].x, imageCorners[0].y),
@@ -340,6 +337,6 @@ void MainWindow::paintResult(std::vector<Point2f> imageCorners)
                                                  QPoint(imageCorners[2].x, imageCorners[2].y),
                                                  QPoint(imageCorners[3].x, imageCorners[3].y),
                                                  QPoint(imageCorners[0].x, imageCorners[0].y)};
-    visorS->drawPolyLine(QVector<QPoint>(object_draw), Qt::red);
+    visorS->drawPolyLine(QVector<QPoint>(object_draw), color);
     qDebug() << __FUNCTION__ << "Sale";
 }
