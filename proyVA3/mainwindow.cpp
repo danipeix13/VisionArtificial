@@ -40,8 +40,6 @@ MainWindow::MainWindow(QWidget *parent) :
     matcher = BFMatcher::create(NORM_HAMMING);
 
     images.resize(3);
-
-    //ACTUALIZAR COLECCION: BORRAR ENTERA (matcher->clear() y for add(objectDest[i]))
 }
 
 MainWindow::~MainWindow()
@@ -135,13 +133,13 @@ void MainWindow::addObject()
 {
     //XAux: std::vector<std::vector<X>>
     //XScale: std::vector<X>
-    std::cout << images.size() << std::endl;
+    qDebug() << __FUNCTION__ << "Tamaño de images:" << images.size();
 
     ui->boxObj->setItemText(ui->boxObj->currentIndex(),ui->boxObj->currentText());
 
     Mat matAux = copyWindow();
     Mat detectionMat;
-    std::cout << "INDICE" << ui->boxObj->currentIndex() << std::endl;
+    qDebug() << __FUNCTION__ << "Índice:" << ui->boxObj->currentIndex();
 
     if (!matAux.empty())
     {
@@ -169,10 +167,8 @@ void MainWindow::addObject()
             else
                 invalid = true;
         }
-
-        qDebug() << invalid;
         if (invalid)
-            std::cout << "NO KP WERE DETECTED" << std::endl;
+            qDebug() << __FUNCTION__ << "No se detectaron KeyPoints";
         else
         {
             int x = (320 - imageWindow.width) / 2, y = (240 - imageWindow.height) / 2;
@@ -184,6 +180,7 @@ void MainWindow::addObject()
             matcher->clear();
             for (auto &&element : objectDesc)
                 matcher->add(element);
+            winSelected = false;
         }
     }
 }
@@ -195,7 +192,6 @@ void MainWindow::deleteObject()
     destGrayImage.setTo(0);
     remove(collect2object.begin(), collect2object.end(), ui->boxObj->currentIndex());
     ui->boxObj->setItemText(ui->boxObj->currentIndex(),"[EMPTY]");
-    //Hasta aqui bien uwu
     objectKP[ui->boxObj->currentIndex()].clear();
     objectDesc[ui->boxObj->currentIndex()].clear();
     matcher->clear();
@@ -217,13 +213,14 @@ void MainWindow::showImage(int index)
 
 void MainWindow::collectionMatching()
 {
+    qDebug() << __FUNCTION__ << "Detectar";
     Mat imageDesc;
     std::vector<KeyPoint> imageKp;
     orbDetector->detectAndCompute(grayImage, Mat(), imageKp, imageDesc);
 
     if(!imageKp.empty() and !imageDesc.empty())
     {
-        qDebug() << __FUNCTION__ << "IMAGAE KP AND IMAGEDESCK HAS VALUES";
+        qDebug() << __FUNCTION__ << "ImageKp y imageDesc tienen valor";
         std::vector<std::vector<DMatch>> matches;
         matcher->knnMatch(imageDesc, matches, 3);
 
@@ -236,7 +233,7 @@ void MainWindow::collectionMatching()
 
             if(ordered_matches[bestObject][bestScale].size() > 10)
             {
-                qDebug() << __FUNCTION__ << "DSPS DE ORDENAR";
+                qDebug() << __FUNCTION__ << "Hay más de 10 matches";
 
                 std::vector<Point2f> imagePoints, objectPoints;
 
@@ -247,23 +244,24 @@ void MainWindow::collectionMatching()
                 paintResult(imageCorners);
             }
             else
-                qInfo() << __FUNCTION__ << "NOT ENOUGH MATCHES";
+                qInfo() << __FUNCTION__ << "No hay más de 10 matches";
         }
         else
-            qInfo() << __FUNCTION__ << "Matches Size = 0";
+            qInfo() << __FUNCTION__ << "No hay matches";
     }
     else
-        qInfo() << __FUNCTION__ << "imageKP or imageDesc are empty";
+        qInfo() << __FUNCTION__ << "imageKP o imageDesc está vacío";
 }
 
 std::vector<std::vector<std::vector<DMatch>>> MainWindow::orderMatches(std::vector<std::vector<DMatch>> matches)
 {
+    qDebug() << __FUNCTION__ << "Entra";
     std::vector<std::vector<std::vector<DMatch>>> ordered_matches;
     ordered_matches.resize(3);
     for(int i = 0; i < ordered_matches.size(); i++)
         ordered_matches[i].resize(3);
 
-    qDebug() << __FUNCTION__ << "236";
+    qDebug() << __FUNCTION__ << "Ordena";
 
     for (std::vector<DMatch> vec : matches)
         for(DMatch m: vec)
@@ -274,12 +272,13 @@ std::vector<std::vector<std::vector<DMatch>>> MainWindow::orderMatches(std::vect
                 ordered_matches[objeto][escala].push_back(m);
             }
 
-    qDebug() << __FUNCTION__ << "247";
+    qDebug() << __FUNCTION__ << "Sale";
     return ordered_matches;
 }
 
 void MainWindow::bestMatch(std::vector<std::vector<std::vector<DMatch>>> ordered_matches, int &bestObject, int &bestScale)
 {
+    qDebug() << __FUNCTION__ << "Entra";
     int maxMatchsNumber = 0;
     for(int i = 0; i < 3; i++)
         for(int j = 0; j < 3; j++)
@@ -292,10 +291,10 @@ void MainWindow::bestMatch(std::vector<std::vector<std::vector<DMatch>>> ordered
                 maxMatchsNumber = ordered_matches[i][j].size();
                 bestObject = i;
                 bestScale = j;
-                qDebug() << __FUNCTION__ << "bESTmATCH";
+                qDebug() << __FUNCTION__ << "Actualiza el mejor match";
             }
         }
-    qDebug() << __FUNCTION__ << "271";
+    qDebug() << __FUNCTION__ << "Sale";
     /*std::vector<std::vector<DMatch>> bestMatches;
     for(int objeto = 0; objeto < 3; objeto++)
         bestMatches.push_back(std::ranges::max_element(ordered_matches[objeto], [this](auto a, auto b){return a.size() < b.size();}));
@@ -305,45 +304,42 @@ void MainWindow::bestMatch(std::vector<std::vector<std::vector<DMatch>>> ordered
 void MainWindow::pointsCorrespondence(std::vector<DMatch> bestMatch, std::vector<KeyPoint> imageKp, int bestObject, int bestScale,
                                       std::vector<Point2f> &imagePoints, std::vector<Point2f> &objectPoints)
 {
-    qDebug() << __FUNCTION__ << "GENERAR CORRESPONDENCIA DE PUNTOS";
-    qDebug() << __FUNCTION__ << "MatchSize" << bestMatch.size();
-
+    qDebug() << __FUNCTION__ << "Entra";
+    qDebug() << __FUNCTION__ << "Tamaño mejor match:" << bestMatch.size();
 
     for(DMatch m : bestMatch)
     {
         imagePoints.push_back(imageKp[m.queryIdx].pt);
         objectPoints.push_back(objectKP[bestObject][bestScale][m.trainIdx].pt);
     }
+    qDebug() << __FUNCTION__ << "Sale";
 }
 
 std::vector<Point2f> MainWindow::getAndApplyHomography(std::vector<Point2f> imagePoints, std::vector<Point2f> objectPoints, int bestObject, int bestScale)
 {
-    qDebug() << __FUNCTION__ << "OBTENER Y APLICAR HOMOGRAFIA";
+    qDebug() << __FUNCTION__ << "Entra";
     Mat H = findHomography(objectPoints, imagePoints, LMEDS);
-    qDebug() << __FUNCTION__ << "DSPS de homografia";
+    qDebug() << __FUNCTION__ << "Homografía obtenida";
 
     Mat image = images[bestObject];
     int h = image.rows * scaleFactors[bestScale], w = image.cols * scaleFactors[bestScale];
 
     qDebug() << __FUNCTION__ << "H:" << h << "W:" << w;
     std::vector<Point2f> imageCorners, objectCorners = {Point2f(0, 0), Point2f(w-1, 0), Point2f(w-1, h-1), Point2f(0, h-1)};
+    qDebug() << __FUNCTION__ << "Obtiene los puntos";
     perspectiveTransform(objectCorners, imageCorners, H);
+    qDebug() << __FUNCTION__ << "Sale";
     return imageCorners;
 }
 
 void MainWindow::paintResult(std::vector<Point2f> imageCorners)
 {
-    qDebug() << __FUNCTION__ << "PINTAR RESULTADO";
+    qDebug() << __FUNCTION__ << "Entra";
     std::initializer_list<QPoint> object_draw = {QPoint(imageCorners[0].x, imageCorners[0].y),
                                                  QPoint(imageCorners[1].x, imageCorners[1].y),
                                                  QPoint(imageCorners[2].x, imageCorners[2].y),
                                                  QPoint(imageCorners[3].x, imageCorners[3].y),
                                                  QPoint(imageCorners[0].x, imageCorners[0].y)};
     visorS->drawPolyLine(QVector<QPoint>(object_draw), Qt::red);
+    qDebug() << __FUNCTION__ << "Sale";
 }
-
-// TODO
-/*
-    Para calcular la homografñia se necesitan un mínimo de puntos: comprobar
-    For each raro
-*/
