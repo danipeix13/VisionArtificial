@@ -8,6 +8,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
     cap = new VideoCapture(0);
+    qDebug() << "FPS" << cap->get(CAP_PROP_FPS);
+    cap->set(CAP_PROP_FPS, 30);
+
     winSelected = false;
 
     colorImage.create(240,320,CV_8UC3);
@@ -135,7 +138,7 @@ void MainWindow::addObject()
     //XScale: std::vector<X>
     qDebug() << __FUNCTION__ << "Tamaño de images:" << images.size();
 
-    ui->boxObj->setItemText(ui->boxObj->currentIndex(),ui->boxObj->currentText());
+    ui->boxObj->setItemText(ui->boxObj->currentIndex(), ui->boxObj->currentText());
 
     Mat matAux = copyWindow();
     Mat detectionMat;
@@ -167,6 +170,7 @@ void MainWindow::addObject()
             else
                 invalid = true;
         }
+
         if (invalid)
             qDebug() << __FUNCTION__ << "No se detectaron KeyPoints";
         else
@@ -226,19 +230,24 @@ void MainWindow::collectionMatching()
 
         if (matches.size() > 0)
         {
+
             std::vector<std::vector<std::vector<DMatch>>> ordered_matches = orderMatches(matches);
 
             std::vector<int> bestObject, bestScale;
             std::vector<Match> bestMatches;
+            bestMatches.resize(3);
             bestMatch(ordered_matches, bestMatches);
 
-            for(int i = 0; i < images.size(); i++)
+            qDebug() << "IMAGES SIZE" << images.size();
+
+            for(int i = 0; i < 3; i++)
             {
                 qDebug() << __FUNCTION__ << "Objeto" << i;
                 int objeto = bestMatches.at(i).i,  escala = bestMatches.at(i).j;
+                qDebug() << "TAM" << ordered_matches[objeto][escala].size();
                 QColor color = colors.at(i);
 
-                if(ordered_matches[objeto][escala].size() > 10)
+                if(ordered_matches[i][escala].size() > 10)
                 {
                     qDebug() << __FUNCTION__ << "Hay más de 10 matches";
 
@@ -253,7 +262,6 @@ void MainWindow::collectionMatching()
                 else
                     qInfo() << __FUNCTION__ << "No hay más de 10 matches";
             }
-
         }
         else
             qInfo() << __FUNCTION__ << "No hay matches";
@@ -288,13 +296,39 @@ std::vector<std::vector<std::vector<DMatch>>> MainWindow::orderMatches(std::vect
 void MainWindow::bestMatch(std::vector<std::vector<std::vector<DMatch>>> ordered_matches, std::vector<Match> &bestMatches)
 {
     qDebug() << __FUNCTION__ << "Entra";
-    std::vector<Match> matchesToOrder;
+    for(int i = 0; i < images.size(); i++)
+    {
+        int bestMatch = 0, bestScale;
+        for(int j = 0; i < N_SCALES; j++)
+        {
+            if(ordered_matches[i][j].size() > bestMatch)
+            {
+                bestScale = j;
+            }
+        }
+        Match m = Match{ordered_matches[i][bestScale].size(), i, bestScale};
+        bestMatches[i] = m;
+    }
+    /*std::vector<Match> matchesToOrder;
     for(int i = 0; i < 3; i++)
         for(int j = 0; j < N_SCALES; j++)
             matchesToOrder.push_back(Match{ordered_matches[i][j].size(), i, j});
+
     std::sort(matchesToOrder.begin(), matchesToOrder.end(), [](Match a, Match b){return a.size > b.size;});
-    for(int i = 0; i < images.size(); i++)
-        bestMatches.push_back(matchesToOrder.at(i));
+    int found = 0;
+    for(int i = 0; i < matchesToOrder.size() && found < images.size(); i++)
+    {
+        bool insert = true;
+        for(Match m: bestMatches)
+        {
+            if(matchesToOrder.at(i).i == m.i)
+            {
+                insert = false;
+            }
+        }
+        if(insert)
+            bestMatches[matchesToOrder.at(i).i] = matchesToOrder.at(i);
+    }*/
     qDebug() << __FUNCTION__ << "Sale";
 }
 
@@ -318,15 +352,18 @@ std::vector<Point2f> MainWindow::getAndApplyHomography(std::vector<Point2f> imag
     Mat H = findHomography(objectPoints, imagePoints, LMEDS);
     qDebug() << __FUNCTION__ << "Homografía obtenida";
 
-    Mat image = images[bestObject];
-    int h = image.rows * scaleFactors[bestScale], w = image.cols * scaleFactors[bestScale];
+    if(!H.empty())
+    {
+        Mat image = images[bestObject];
+        int h = image.rows * scaleFactors[bestScale], w = image.cols * scaleFactors[bestScale];
 
-    qDebug() << __FUNCTION__ << "H:" << h << "W:" << w;
-    std::vector<Point2f> imageCorners, objectCorners = {Point2f(0, 0), Point2f(w-1, 0), Point2f(w-1, h-1), Point2f(0, h-1)};
-    qDebug() << __FUNCTION__ << "Obtiene los puntos";
-    perspectiveTransform(objectCorners, imageCorners, H);
-    qDebug() << __FUNCTION__ << "Sale";
-    return imageCorners;
+        qDebug() << __FUNCTION__ << "H:" << h << "W:" << w;
+        std::vector<Point2f> imageCorners, objectCorners = {Point2f(0, 0), Point2f(w-1, 0), Point2f(w-1, h-1), Point2f(0, h-1)};
+        qDebug() << __FUNCTION__ << "Obtiene los puntos";
+        perspectiveTransform(objectCorners, imageCorners, H);
+        qDebug() << __FUNCTION__ << "Sale";
+        return imageCorners;
+    }
 }
 
 void MainWindow::paintResult(std::vector<Point2f> imageCorners, QString name, QColor color)
