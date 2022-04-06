@@ -49,12 +49,12 @@ private:
 
     std::vector<std::vector<std::vector<KeyPoint>>> objectKP; //Acceso: objectKP[objeto][escala] --> std::vector<KeyPoint> (keypoints)
     std::vector<std::vector<Mat>> objectDesc; //Acceso: objectDesc[objeto][escala] --> Mat(descriptor)
-    std::vector<float> scaleFactors = {0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6};
+    std::vector<float> scaleFactors = {0.75, 1.0, 1.25};
     const int N_SCALES = scaleFactors.size();
 
     Ptr<ORB> orbDetector;
     Ptr<BFMatcher> matcher;
-    struct Match { int size, i, j; };
+    struct Match {  std::vector<DMatch> value; int i, j; };
     std::vector<QColor> colors = {Qt::red, Qt::blue, Qt::green};
 
     Mat copyWindow();
@@ -63,7 +63,7 @@ private:
     void bestMatch(std::vector<std::vector<std::vector<DMatch>>> ordered_matches, std::vector<Match> &bestMatches);
     void pointsCorrespondence(std::vector<DMatch> ordered_matches, std::vector<KeyPoint> imageKp, int bestObject,int bestScale,
                               std::vector<Point2f> &imagePoints, std::vector<Point2f> &objectPoints);
-    std::vector<Point2f> getAndApplyHomography(std::vector<Point2f> imagePoints, std::vector<Point2f> objectPoints, int bestObject, int bestScale);
+    bool getAndApplyHomography(std::vector<Point2f> imagePoints, std::vector<Point2f> objectPoints, int bestObject, int bestScale, std::vector<Point2f> &imageCorners);
     void paintResult(std::vector<Point2f> imageCorners, QString name, QColor color);
 
 public slots:

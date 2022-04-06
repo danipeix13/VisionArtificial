@@ -8,9 +8,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
     cap = new VideoCapture(0);
-    qDebug() << "FPS" << cap->get(CAP_PROP_FPS);
     cap->set(CAP_PROP_FPS, 30);
-
     winSelected = false;
 
     colorImage.create(240,320,CV_8UC3);
@@ -37,11 +35,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->boxObj,SIGNAL(currentIndexChanged(int)),this,SLOT(showImage(int)));
 
-    timer.start(30);
+    timer.start(500);
 
     orbDetector = ORB::create();
     matcher = BFMatcher::create(NORM_HAMMING);
 
+    objectDesc.resize(3);
+    objectKP.resize(3);
     images.resize(3);
 }
 
@@ -70,12 +70,10 @@ void MainWindow::compute()
 
     }
 
-
     //En este punto se debe incluir el código asociado con el procesamiento de cada captura
     collectionMatching();
 
     //Actualización de los visores
-
     if(winSelected)
         visorS->drawSquare(QRect(imageWindow.x, imageWindow.y, imageWindow.width,imageWindow.height), Qt::green );
 
@@ -138,7 +136,7 @@ void MainWindow::addObject()
     //XScale: std::vector<X>
     qDebug() << __FUNCTION__ << "Tamaño de images:" << images.size();
 
-    ui->boxObj->setItemText(ui->boxObj->currentIndex(), ui->boxObj->currentText());
+    ui->boxObj->setItemText(ui->boxObj->currentIndex(),ui->boxObj->currentText());
 
     Mat matAux = copyWindow();
     Mat detectionMat;
@@ -147,15 +145,16 @@ void MainWindow::addObject()
     if (!matAux.empty())
     {
         matAux.copyTo(images[ui->boxObj->currentIndex()]);
-
+        qDebug() << __FUNCTION__ << "Copia realizada";
         std::vector<KeyPoint> kpScale;
         std::vector<std::vector<KeyPoint>>kpObject;
         Mat descScale;
         std::vector<Mat> descObject;
-
         bool invalid = false;
+
         for (float factor : scaleFactors)
         {
+            qDebug() << __FUNCTION__ << "SUSMUERTOS";
             if (invalid)
                 break;
 
@@ -164,43 +163,55 @@ void MainWindow::addObject()
 
             if (kpScale.size() > 0)
             {
+                qDebug() << __FUNCTION__ << "SUSMUERTISIMOS EN PATINETE";
                 kpObject.push_back(kpScale);
                 descObject.push_back(descScale);
             }
             else
                 invalid = true;
         }
-
         if (invalid)
             qDebug() << __FUNCTION__ << "No se detectaron KeyPoints";
         else
         {
+            qDebug() << __FUNCTION__ << "Q es válido cojones";
             int x = (320 - imageWindow.width) / 2, y = (240 - imageWindow.height) / 2;
             Mat destImage = Mat(destGrayImage, Rect(x, y, imageWindow.width, imageWindow.height));
+            qDebug() << __FUNCTION__ << "Va a explotar";
             matAux.copyTo(destImage);
-            objectKP.insert(objectKP.begin()+ui->boxObj->currentIndex(),kpObject);
-            objectDesc.insert(objectDesc.begin()+ui->boxObj->currentIndex(),descObject);
+            qDebug() << __FUNCTION__ << "No explotes x favor";
+            objectKP[ui->boxObj->currentIndex()] = kpObject;
+            objectDesc[ui->boxObj->currentIndex()] = descObject;
+            qDebug() << __FUNCTION__ << "NIIGU!?" << objectKP.size() << objectDesc.size();
             collect2object.push_back(ui->boxObj->currentIndex());
+            qDebug() << __FUNCTION__ << "Ha explotado";
             matcher->clear();
             for (auto &&element : objectDesc)
                 matcher->add(element);
             winSelected = false;
+            qDebug() << __FUNCTION__ << "Suisidasión";
         }
     }
+    else
+        qDebug() << __FUNCTION__ << "Empty mat";
 }
 
 void MainWindow::deleteObject()
 {
-    Mat mat = Mat();
-    mat.copyTo(images[ui->boxObj->currentIndex()]);
-    destGrayImage.setTo(0);
-    remove(collect2object.begin(), collect2object.end(), ui->boxObj->currentIndex());
-    ui->boxObj->setItemText(ui->boxObj->currentIndex(),"[EMPTY]");
-    objectKP[ui->boxObj->currentIndex()].clear();
-    objectDesc[ui->boxObj->currentIndex()].clear();
-    matcher->clear();
-    for (auto &&element : objectDesc)
-        matcher->add(element);
+    if(!images[ui->boxObj->currentIndex()].empty())
+    {
+        Mat mat = Mat();
+        mat.copyTo(images[ui->boxObj->currentIndex()]);
+        destGrayImage.setTo(0);
+        remove(collect2object.begin(), collect2object.end(), ui->boxObj->currentIndex());
+        ui->boxObj->setItemText(ui->boxObj->currentIndex(),"[EMPTY]");
+        objectKP[ui->boxObj->currentIndex()] = std::vector<std::vector<KeyPoint>>();
+        objectDesc[ui->boxObj->currentIndex()] = std::vector<Mat>();
+        matcher->clear();
+        for (auto &&element : objectDesc)
+            matcher->add(element);
+    }
+
 }
 
 void MainWindow::showImage(int index)
@@ -230,7 +241,6 @@ void MainWindow::collectionMatching()
 
         if (matches.size() > 0)
         {
-
             std::vector<std::vector<std::vector<DMatch>>> ordered_matches = orderMatches(matches);
 
             std::vector<int> bestObject, bestScale;
@@ -238,30 +248,38 @@ void MainWindow::collectionMatching()
             bestMatches.resize(3);
             bestMatch(ordered_matches, bestMatches);
 
-            qDebug() << "IMAGES SIZE" << images.size();
-
-            for(int i = 0; i < 3; i++)
+            for(Match match: bestMatches)
             {
-                qDebug() << __FUNCTION__ << "Objeto" << i;
-                int objeto = bestMatches.at(i).i,  escala = bestMatches.at(i).j;
-                qDebug() << "TAM" << ordered_matches[objeto][escala].size();
-                QColor color = colors.at(i);
-
-                if(ordered_matches[i][escala].size() > 10)
+                qDebug() << __FUNCTION__ << "Objeto" << match.i;
+                if (match.value.size() > 0)
                 {
-                    qDebug() << __FUNCTION__ << "Hay más de 10 matches";
+                    qDebug() << __FUNCTION__ << "Tiene cosos";
+                    int objeto = match.i,  escala = match.j;
+                    QColor color = colors.at(objeto);
 
-                    std::vector<Point2f> imagePoints, objectPoints;
+                    if(match.value.size() > 20)
+                    {
+                        qDebug() << __FUNCTION__ << "Hay más de 10 matches";
 
-                    pointsCorrespondence(ordered_matches[objeto][escala], imageKp, objeto, escala, imagePoints, objectPoints);
+                        std::vector<Point2f> imagePoints, objectPoints;
+                        pointsCorrespondence(match.value, imageKp, objeto, escala, imagePoints, objectPoints);
 
-                    std::vector<Point2f> imageCorners = getAndApplyHomography(imagePoints, objectPoints, objeto, escala);
+                        std::vector<Point2f> imageCorners;
+                        if(getAndApplyHomography(imagePoints, objectPoints, objeto, escala, imageCorners)){
+                            paintResult(imageCorners, ui->boxObj->itemText(objeto), color);
+                            for(auto &&corner: imageCorners)
+                                qDebug() << corner.x << corner.y;
+                        }else
+                            qInfo() << __FUNCTION__ << "HOMOGRAFÍA DE MIERDA :')";
 
-                    paintResult(imageCorners, ui->boxObj->itemText(i), color);
+                    }
+                    else
+                        qInfo() << __FUNCTION__ << "No hay más de 10 matches";
                 }
                 else
-                    qInfo() << __FUNCTION__ << "No hay más de 10 matches";
+                    qDebug() << __FUNCTION__ << "NO tiene cosos";
             }
+
         }
         else
             qInfo() << __FUNCTION__ << "No hay matches";
@@ -281,13 +299,14 @@ std::vector<std::vector<std::vector<DMatch>>> MainWindow::orderMatches(std::vect
     qDebug() << __FUNCTION__ << "Ordena";
 
     for (std::vector<DMatch> vec : matches)
-        for(DMatch m: vec)
-            if (m.distance <= 30)
-            {
-                int objeto = collect2object[m.imgIdx / N_SCALES],
-                        escala = m.imgIdx % N_SCALES;
-                ordered_matches[objeto][escala].push_back(m);
-            }
+        if(!vec.empty())
+            for(DMatch m: vec)
+                if (m.distance <= 50)
+                {
+                    int objeto = collect2object[m.imgIdx / N_SCALES],
+                            escala = m.imgIdx % N_SCALES;
+                    ordered_matches[objeto][escala].push_back(m);
+                }
 
     qDebug() << __FUNCTION__ << "Sale";
     return ordered_matches;
@@ -296,39 +315,21 @@ std::vector<std::vector<std::vector<DMatch>>> MainWindow::orderMatches(std::vect
 void MainWindow::bestMatch(std::vector<std::vector<std::vector<DMatch>>> ordered_matches, std::vector<Match> &bestMatches)
 {
     qDebug() << __FUNCTION__ << "Entra";
+
     for(int i = 0; i < images.size(); i++)
     {
-        int bestMatch = 0, bestScale;
-        for(int j = 0; i < N_SCALES; j++)
+        std::vector<std::vector<DMatch>> escala = ordered_matches[i];
+        int bestScaleMatch = 0;
+        for (int j = 0; j < N_SCALES; j++)
         {
-            if(ordered_matches[i][j].size() > bestMatch)
+            if(escala[j].size() > escala[bestScaleMatch].size())
             {
-                bestScale = j;
+                bestScaleMatch = j;
             }
         }
-        Match m = Match{ordered_matches[i][bestScale].size(), i, bestScale};
-        bestMatches[i] = m;
+        bestMatches[i] = Match{ordered_matches[i][bestScaleMatch], i, bestScaleMatch};
     }
-    /*std::vector<Match> matchesToOrder;
-    for(int i = 0; i < 3; i++)
-        for(int j = 0; j < N_SCALES; j++)
-            matchesToOrder.push_back(Match{ordered_matches[i][j].size(), i, j});
 
-    std::sort(matchesToOrder.begin(), matchesToOrder.end(), [](Match a, Match b){return a.size > b.size;});
-    int found = 0;
-    for(int i = 0; i < matchesToOrder.size() && found < images.size(); i++)
-    {
-        bool insert = true;
-        for(Match m: bestMatches)
-        {
-            if(matchesToOrder.at(i).i == m.i)
-            {
-                insert = false;
-            }
-        }
-        if(insert)
-            bestMatches[matchesToOrder.at(i).i] = matchesToOrder.at(i);
-    }*/
     qDebug() << __FUNCTION__ << "Sale";
 }
 
@@ -341,29 +342,42 @@ void MainWindow::pointsCorrespondence(std::vector<DMatch> bestMatch, std::vector
     for(DMatch m : bestMatch)
     {
         imagePoints.push_back(imageKp[m.queryIdx].pt);
+        qDebug() << __FUNCTION__ << "MECAGOENSUSMUERTOS; PILAR AIUDA";
+        qDebug() << bestObject << bestScale << m.trainIdx;
+        qDebug() << objectKP.size();
+        qDebug() << objectKP[bestObject].size();
+        qDebug() << objectKP[bestObject][bestScale].size();
+        qDebug() << objectKP[bestObject][bestScale][m.trainIdx].pt.x << objectKP[bestObject][bestScale][m.trainIdx].pt.y;
         objectPoints.push_back(objectKP[bestObject][bestScale][m.trainIdx].pt);
+        qDebug() << __FUNCTION__ << "Me MOLI :((((";
     }
     qDebug() << __FUNCTION__ << "Sale";
 }
 
-std::vector<Point2f> MainWindow::getAndApplyHomography(std::vector<Point2f> imagePoints, std::vector<Point2f> objectPoints, int bestObject, int bestScale)
+bool MainWindow::getAndApplyHomography(std::vector<Point2f> imagePoints, std::vector<Point2f> objectPoints, int bestObject, int bestScale, std::vector<Point2f> &imageCorners)
 {
     qDebug() << __FUNCTION__ << "Entra";
-    Mat H = findHomography(objectPoints, imagePoints, LMEDS);
-    qDebug() << __FUNCTION__ << "Homografía obtenida";
-
-    if(!H.empty())
+    if(objectPoints.size() > 10 && imagePoints.size() > 10)
     {
-        Mat image = images[bestObject];
-        int h = image.rows * scaleFactors[bestScale], w = image.cols * scaleFactors[bestScale];
+        Mat H = findHomography(objectPoints, imagePoints, LMEDS);
+        qDebug() << __FUNCTION__ << "Homografía obtenida";
 
-        qDebug() << __FUNCTION__ << "H:" << h << "W:" << w;
-        std::vector<Point2f> imageCorners, objectCorners = {Point2f(0, 0), Point2f(w-1, 0), Point2f(w-1, h-1), Point2f(0, h-1)};
-        qDebug() << __FUNCTION__ << "Obtiene los puntos";
-        perspectiveTransform(objectCorners, imageCorners, H);
-        qDebug() << __FUNCTION__ << "Sale";
-        return imageCorners;
+        if(!H.empty())
+        {
+            Mat image = images[bestObject];
+            int h = image.rows * scaleFactors[bestScale], w = image.cols * scaleFactors[bestScale];
+
+            qDebug() << __FUNCTION__ << "H:" << h << "W:" << w;
+            std::vector<Point2f> objectCorners = {Point2f(0, 0), Point2f(w-1, 0), Point2f(w-1, h-1), Point2f(0, h-1)};
+            qDebug() << __FUNCTION__ << "Obtiene los puntos";
+            perspectiveTransform(objectCorners, imageCorners, H);
+            qDebug() << __FUNCTION__ << "Sale";
+            return true;
+        }
+        else
+            qDebug() << __FUNCTION__ << "Homografia vacia";
     }
+    return false;
 }
 
 void MainWindow::paintResult(std::vector<Point2f> imageCorners, QString name, QColor color)
@@ -377,3 +391,4 @@ void MainWindow::paintResult(std::vector<Point2f> imageCorners, QString name, QC
     visorS->drawPolyLine(QVector<QPoint>(object_draw), color);
     qDebug() << __FUNCTION__ << "Sale";
 }
+
