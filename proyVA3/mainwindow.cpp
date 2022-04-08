@@ -29,6 +29,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->addObjBtn,SIGNAL(clicked()),this,SLOT(addObject()));
     connect(ui->delObjBtn,SIGNAL(clicked()),this,SLOT(deleteObject()));
 
+    connect(ui->loadBtn,SIGNAL(clicked()),this,SLOT(loadCollection()));
+    connect(ui->saveBtn,SIGNAL(clicked()),this,SLOT(saveCollection()));
+
     ui->boxObj->addItem(QString("[EMPTY]"));
     ui->boxObj->addItem(QString("[EMPTY]"));
     ui->boxObj->addItem(QString("[EMPTY]"));
@@ -139,8 +142,11 @@ void MainWindow::addObject()
 
     ui->boxObj->setItemText(ui->boxObj->currentIndex(),ui->boxObj->currentText());
 
-    Mat matAux = copyWindow();
-    Mat detectionMat;
+    Mat detectionMat, matAux;
+    if(temporaryMat.empty())
+        matAux = copyWindow();
+    else
+        temporaryMat.copyTo(matAux);
     qDebug() << __FUNCTION__ << "Índice:" << ui->boxObj->currentIndex();
 
     if (!matAux.empty())
@@ -154,7 +160,7 @@ void MainWindow::addObject()
 
         for (float factor : scaleFactors)
         {
-            qDebug() << __FUNCTION__ << "SUSMUERTOS";
+            qDebug() << __FUNCTION__ << "Escala";
             if (invalid)
                 break;
 
@@ -163,8 +169,7 @@ void MainWindow::addObject()
 
             if (kpScale.size() > 0)
             {
-                qDebug() << __FUNCTION__ << "SUSMUERTISIMOS EN PATINETE";
-                //Se puede hacer aqui un push back?
+                qDebug() << __FUNCTION__ << "Escala válida";
                 kpObject.push_back(kpScale);
                 descObject.push_back(descScale);
             }
@@ -176,15 +181,14 @@ void MainWindow::addObject()
         else
         {
             matAux.copyTo(images[ui->boxObj->currentIndex()]);
-            qDebug() << __FUNCTION__ << "Q es válido cojones";
+//            qDebug() << __FUNCTION__ << "Copia";
             int x = (320 - imageWindow.width) / 2, y = (240 - imageWindow.height) / 2;
             Mat destImage = Mat(destGrayImage, Rect(x, y, imageWindow.width, imageWindow.height));
-            qDebug() << __FUNCTION__ << "Va a explotar";
             matAux.copyTo(destImage);
-            qDebug() << __FUNCTION__ << "No explotes x favor";
+//            qDebug() << __FUNCTION__ << "Copia 2";
             objectKP[ui->boxObj->currentIndex()] = kpObject;
             objectDesc[ui->boxObj->currentIndex()] = descObject;
-            qDebug() << __FUNCTION__ << "NIIGU!?" << objectKP.size() << objectDesc.size();
+//            qDebug() << __FUNCTION__ << objectKP.size() << objectDesc.size();
             //collect2object.push_back(ui->boxObj->currentIndex());
             collect2object.clear();
             for(int i = 0; i < 3; i++)
@@ -193,12 +197,11 @@ void MainWindow::addObject()
                     collect2object.push_back(i);
             }
 
-            qDebug() << __FUNCTION__ << "Ha explotado";
+//            qDebug() << __FUNCTION__ << "Collect2objet actualizado";
             matcher->clear();
             for (auto &&element : objectDesc)
                 matcher->add(element);
             winSelected = false;
-            qDebug() << __FUNCTION__ << "Suisidasión";
         }
     }
     else
@@ -242,6 +245,38 @@ void MainWindow::showImage(int index)
         int x = (320 - currentObject.cols) / 2, y = (240 - currentObject.rows) / 2;
         currentObject.copyTo(Mat(destGrayImage, Rect(x, y, currentObject.cols, currentObject.rows)));
     }
+}
+
+void MainWindow::loadCollection()
+{
+    for(int i = 0; i < 3; i++)
+    {
+        String file = "/home/robocomp/robocomp/components/VisionArtificial/proyVA3/object" + std::to_string(i) + ".jpg";
+        temporaryMat = Mat(cv::imread(file));
+        if(temporaryMat.empty())
+            qDebug() << __FUNCTION__ << "Trying to load an empty image";
+        else
+        {
+            std::cout << "Carga" << std::endl;
+            ui->boxObj->setCurrentIndex(i);
+            addObject();
+        }
+
+    }
+    temporaryMat = Mat();
+}
+
+void MainWindow::saveCollection()
+{
+    int i = 0;
+    for(Mat &image: images)
+        if(!image.empty())
+        {
+            std::stringstream file;
+            file << "/home/robocomp/robocomp/components/VisionArtificial/proyVA3/object" << i++ << ".jpg";
+            std::cout << file.str() << std::endl;
+            cv::imwrite(file.str(), image);
+        }
 }
 
 void MainWindow::collectionMatching()
@@ -289,7 +324,7 @@ void MainWindow::collectionMatching()
 //                            for(auto &&corner: imageCorners)
 //                                qDebug() << corner.x << corner.y;
                         }else
-                            qInfo() << __FUNCTION__ << "HOMOGRAFÍA DE MIERDA :')";
+                            qInfo() << __FUNCTION__ << "Homografía no obtenida";
 
                     }
                     else
@@ -361,14 +396,13 @@ void MainWindow::pointsCorrespondence(std::vector<DMatch> bestMatch, std::vector
     for(DMatch m : bestMatch)
     {
         imagePoints.push_back(imageKp[m.queryIdx].pt);
-//        qDebug() << __FUNCTION__ << "MECAGOENSUSMUERTOS; PILAR AIUDA";
 //        qDebug() << bestObject << bestScale << m.trainIdx;
 //        qDebug() << objectKP.size();
 //        qDebug() << objectKP[bestObject].size();
 //        qDebug() << objectKP[bestObject][bestScale].size();
 //        qDebug() << objectKP[bestObject][bestScale][m.trainIdx].pt.x << objectKP[bestObject][bestScale][m.trainIdx].pt.y;
         objectPoints.push_back(objectKP[bestObject][bestScale][m.trainIdx].pt);
-//        qDebug() << __FUNCTION__ << "Me MOLI :((((";
+//        qDebug() << __FUNCTION__ << "Después del push_back";
     }
 //    qDebug() << __FUNCTION__ << "Sale";
 }
@@ -408,6 +442,9 @@ void MainWindow::paintResult(std::vector<Point2f> imageCorners, QString name, QC
                                                  QPoint(imageCorners[3].x, imageCorners[3].y),
                                                  QPoint(imageCorners[0].x, imageCorners[0].y)};
     visorS->drawPolyLine(QVector<QPoint>(object_draw), color);
+
+    QPoint center = QPoint((imageCorners[0].x + imageCorners[2].x)/2, (imageCorners[0].y + imageCorners[2].y)/2);
+    visorS->drawText(center, name, 15, color);
     //qDebug() << __FUNCTION__ << "Sale";
 }
 

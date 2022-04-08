@@ -56,6 +56,7 @@ private:
     Ptr<BFMatcher> matcher;
     struct Match {  std::vector<DMatch> value; int i, j; };
     std::vector<QColor> colors = {Qt::red, Qt::blue, Qt::green};
+    Mat temporaryMat;
 
     Mat copyWindow();
     void collectionMatching();
@@ -73,6 +74,8 @@ public slots:
     void deselectWindow(QPointF p);
     void addObject();
     void deleteObject();
+    void saveCollection();
+    void loadCollection();
     void showImage(int index);
 };
 
