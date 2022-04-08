@@ -50,12 +50,15 @@ private:
     std::vector<std::vector<std::vector<KeyPoint>>> objectKP; //Acceso: objectKP[objeto][escala] --> std::vector<KeyPoint> (keypoints)
     std::vector<std::vector<Mat>> objectDesc; //Acceso: objectDesc[objeto][escala] --> Mat(descriptor)
     std::vector<float> scaleFactors = {0.75, 1.0, 1.25};
-    const int N_SCALES = scaleFactors.size();
+    const int N_SCALES = scaleFactors.size(), N_OBJECTS = 8;
 
     Ptr<ORB> orbDetector;
     Ptr<BFMatcher> matcher;
     struct Match {  std::vector<DMatch> value; int i, j; };
-    std::vector<QColor> colors = {Qt::red, Qt::blue, Qt::green};
+    std::vector<QColor> colors = {Qt::white,     Qt::red,       Qt::green,      Qt::blue,
+                                  Qt::gray,      Qt::cyan,      Qt::magenta,    Qt::yellow,
+                                  Qt::black,     Qt::darkRed,   Qt::darkBlue,   Qt::darkGreen,
+                                  Qt::darkGray,  Qt::darkCyan,  Qt::darkMagenta,Qt::darkYellow};
     Mat temporaryMat;
 
     Mat copyWindow();

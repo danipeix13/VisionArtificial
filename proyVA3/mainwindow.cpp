@@ -32,9 +32,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->loadBtn,SIGNAL(clicked()),this,SLOT(loadCollection()));
     connect(ui->saveBtn,SIGNAL(clicked()),this,SLOT(saveCollection()));
 
-    ui->boxObj->addItem(QString("[EMPTY]"));
-    ui->boxObj->addItem(QString("[EMPTY]"));
-    ui->boxObj->addItem(QString("[EMPTY]"));
+    for(int i = 0; i < N_OBJECTS; i ++)
+        ui->boxObj->addItem(QString("[EMPTY]"));
 
     connect(ui->boxObj,SIGNAL(currentIndexChanged(int)),this,SLOT(showImage(int)));
 
@@ -43,9 +42,9 @@ MainWindow::MainWindow(QWidget *parent) :
     orbDetector = ORB::create();
     matcher = BFMatcher::create(NORM_HAMMING);
 
-    objectDesc.resize(3);
-    objectKP.resize(3);
-    images.resize(3);
+    objectDesc.resize(N_OBJECTS);
+    objectKP.resize(N_OBJECTS);
+    images.resize(N_OBJECTS);
 }
 
 MainWindow::~MainWindow()
@@ -196,7 +195,7 @@ void MainWindow::addObject()
 //            qDebug() << __FUNCTION__ << objectKP.size() << objectDesc.size();
             //collect2object.push_back(ui->boxObj->currentIndex());
             collect2object.clear();
-            for(int i = 0; i < 3; i++)
+            for(int i = 0; i < N_OBJECTS; i++)
             {
                 if(!objectDesc.at(i).empty())
                     collect2object.push_back(i);
@@ -227,7 +226,7 @@ void MainWindow::deleteObject()
         objectDesc[ui->boxObj->currentIndex()].clear();
 
         collect2object.clear();
-        for(int i = 0; i < 3; i++){
+        for(int i = 0; i < N_OBJECTS; i++){
             if(!objectDesc.at(i).empty())
                 collect2object.push_back(i);
         }
@@ -254,7 +253,7 @@ void MainWindow::showImage(int index)
 
 void MainWindow::loadCollection()
 {
-    for(int i = 0; i < 3; i++)
+    for(int i = 0; i < N_OBJECTS; i++)
     {
         String file = "/home/robocomp/robocomp/components/VisionArtificial/proyVA3/object" + std::to_string(i) + ".jpg";
         temporaryMat = Mat(cv::imread(file));
@@ -304,7 +303,7 @@ void MainWindow::collectionMatching()
 
             std::vector<int> bestObject, bestScale;
             std::vector<Match> bestMatches;
-            bestMatches.resize(3);
+            bestMatches.resize(N_OBJECTS);
             bestMatch(ordered_matches, bestMatches);
 
             for(Match match: bestMatches)
@@ -352,7 +351,7 @@ std::vector<std::vector<std::vector<DMatch>>> MainWindow::orderMatches(std::vect
 {
     //qDebug() << __FUNCTION__ << "Entra";
     std::vector<std::vector<std::vector<DMatch>>> ordered_matches;
-    ordered_matches.resize(3);
+    ordered_matches.resize(N_OBJECTS);
     for(int i = 0; i < ordered_matches.size(); i++)
         ordered_matches[i].resize(N_SCALES);
 
@@ -376,7 +375,7 @@ void MainWindow::bestMatch(std::vector<std::vector<std::vector<DMatch>>> ordered
 {
     qDebug() << __FUNCTION__ << "Entra";
 
-    for(int i = 0; i < images.size(); i++)
+    for(int i = 0; i < N_OBJECTS; i++)
     {
         std::vector<std::vector<DMatch>> escala = ordered_matches[i];
         int bestScaleMatch = 0;

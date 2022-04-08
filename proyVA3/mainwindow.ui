@@ -137,10 +137,10 @@
     <number>-1</number>
    </property>
    <property name="maxVisibleItems">
-    <number>3</number>
+    <number>10</number>
    </property>
    <property name="maxCount">
-    <number>3</number>
+    <number>10</number>
    </property>
   </widget>
   <widget class="QPushButton" name="loadBtn">
