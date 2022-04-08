@@ -136,8 +136,8 @@ Mat MainWindow::copyWindow()
 
 void MainWindow::addObject()
 {
-    //XAux: std::vector<std::vector<X>>
-    //XScale: std::vector<X>
+    /* XAux: std::vector<std::vector<X>> *
+     * XScale: std::vector<X>            */
     qDebug() << __FUNCTION__ << "Tamaño de images:" << images.size();
 
     ui->boxObj->setItemText(ui->boxObj->currentIndex(),ui->boxObj->currentText());
@@ -145,8 +145,13 @@ void MainWindow::addObject()
     Mat detectionMat, matAux;
     if(temporaryMat.empty())
         matAux = copyWindow();
-    else
-        temporaryMat.copyTo(matAux);
+    else{
+//        imshow("TEMP", temporaryMat);
+//        waitKey(10);
+        cv::cvtColor(temporaryMat, matAux, cv::COLOR_BGR2GRAY);
+//        imshow("AUX", matAux);
+//        waitKey(10);
+    }
     qDebug() << __FUNCTION__ << "Índice:" << ui->boxObj->currentIndex();
 
     if (!matAux.empty())
@@ -263,6 +268,7 @@ void MainWindow::loadCollection()
         }
 
     }
+    ui->boxObj->setCurrentIndex(0);
     temporaryMat = Mat();
 }
 
