@@ -255,7 +255,7 @@ void MainWindow::loadCollection()
 {
     for(int i = 0; i < N_OBJECTS; i++)
     {
-        String file = "/home/robocomp/robocomp/components/VisionArtificial/proyVA3/object" + std::to_string(i) + ".jpg";
+        String file = "object" + std::to_string(i) + ".jpg";
         temporaryMat = Mat(cv::imread(file));
         if(temporaryMat.empty())
             qDebug() << __FUNCTION__ << "Trying to load an empty image";
@@ -278,7 +278,7 @@ void MainWindow::saveCollection()
         if(!image.empty())
         {
             std::stringstream file;
-            file << "/home/robocomp/robocomp/components/VisionArtificial/proyVA3/object" << i++ << ".jpg";
+            file << "object" << i++ << ".jpg";
             std::cout << file.str() << std::endl;
             cv::imwrite(file.str(), image);
         }
