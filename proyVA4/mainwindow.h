@@ -10,6 +10,9 @@
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
 #include <opencv2/dnn/dnn.hpp>
+#include <QtWidgets/QFileDialog>
+#include <iostream>
+#include <fstream>
 
 #include <imgviewer.h>
 
@@ -40,13 +43,20 @@ private:
     bool winSelected;
     Rect imageWindow;
 
+    dnn::Net net;
+    std::vector<std::vector<int>> colorTable;
+
+    void fillColorTable();
+    Mat processOutput(Mat output);
 
 public slots:
     void compute();
     void start_stop_capture(bool start);
     void change_color_gray(bool color);
+    void loadImage();
     void selectWindow(QPointF p, int w, int h);
     void deselectWindow(QPointF p);
+    void segmentImage();
 
 };
 
