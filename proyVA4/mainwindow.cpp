@@ -150,6 +150,7 @@ void MainWindow::fillColorTable()
     String fileName = "../proyVA4/fcn/fcn-colors.txt";
     std::fstream colors;
     colors.open(fileName.c_str(), std::ios::in);
+
     if(colors.is_open())
     {
         String r, g, b;
@@ -158,62 +159,75 @@ void MainWindow::fillColorTable()
         {
             getline(colors, g, ',');
             getline(colors, b);
-            std::vector<int> auxVec;
-            auxVec.push_back(std::atoi(r.c_str()));
-            auxVec.push_back(std::atoi(g.c_str()));
-            auxVec.push_back(std::atoi(b.c_str()));
+            Vec3b auxVec(std::atoi(r.c_str()), std::atoi(g.c_str()), std::atoi(b.c_str()));
             colorTable.push_back(auxVec);
             getline(colors, r, ',');
         }
-    }else
-        qDebug() << "PRIMO, NO SABEMOS LEER DE UN PUTO FILE O Q?";
-    for (std::vector<int> category : colorTable){
-        for(int color : category)
-            std::cout << color << " ";
-        std::cout << "\n";
     }
-    std::cout << "CACA" << std::endl;
+    else
+        qDebug() << "The file is closed";
+
+    for (Vec3b cat : colorTable)
+    {
+        qDebug() << cat[0] << cat[1] << cat[2];
+    }
 }
 
 void MainWindow::segmentImage()
 {
-    Mat auxImage;
     Scalar meanRgbValue = cv::mean(colorImage);
-    Size imgSize = Size(colorImage.rows, colorImage.cols);
-    dnn::blobFromImage(colorImage, auxImage, 1.0, imgSize, meanRgbValue, true);
+    qInfo() << colorImage.rows << colorImage.cols;
+    Size imgSize = Size(colorImage.cols, colorImage.rows); //TODO valores de usuario
+    Mat auxImage = dnn::blobFromImage(colorImage, 1.0, imgSize, meanRgbValue, true);
 
     net.setInput(auxImage);
 
-    Mat output;
-    net.forward(output);
+    Mat output = net.forward();
 
-    //Mat segmentedImage = processOutput(output);
+    Mat segmentedImage = processOutput(output, colorImage.rows, colorImage.cols);//TODO valores de usuario
 
-
+    Mat result = mixImages(segmentedImage);
+    result.copyTo(destColorImage);
 
 }
 
-Mat MainWindow::processOutput(Mat output)
+Mat MainWindow::processOutput(Mat output, int height, int width)
 {
-    Mat categories;
-//    for(int i = 0; i < output.rows; i++)
-//    {
-//        for(int j = 0; j < output.cols; j++)
-//        {
-//            int best = 0;
-//            for(int k = 0; k < 21; i++)
-//            {
-//                std::cout << output[Mat()][Mat()];
-////                int catValue = output[1][k][i][j];
-//                if(best > catValue)
-//                {
-//                    best = catValue;
-//                }
-//            }
-//            categories[i][j] = best;
-//        }
-//    }
+    qInfo() << height << width;
+
+    Mat categories = Mat(height, width, CV_8UC3);
+    qInfo() << "post categories";
+    for(int i = 0; i < height; i++)
+    {
+        for(int j = 0; j < width; j++)
+        {
+            int bestCatIndex = 0;
+            for(int k = 0; k < 21; k++)
+            {
+                float catValue = output.at<float>(Vec<int,4>(0,k,i,j));
+                float bestValue = output.at<float>(Vec<int,4>(0,bestCatIndex,i,j));
+                if(bestValue < catValue)
+                {
+                    bestCatIndex = k;
+                }
+            }
+            categories.at<Vec3b>(Point(j, i)) = colorTable.at(bestCatIndex);
+        }
+    }
     return categories;
+}
+
+Mat MainWindow::mixImages(Mat input)
+{
+    Mat output = Mat(input.rows, input.cols, CV_8UC3);
+    float p = ui->catColorBar->value() / 100;
+    for(int i = 0; i < input.rows; i++)
+    {
+        for(int j = 0; j < input.cols; j++)
+        {
+
+        }
+    }
 }
 
 

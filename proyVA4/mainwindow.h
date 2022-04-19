@@ -44,10 +44,11 @@ private:
     Rect imageWindow;
 
     dnn::Net net;
-    std::vector<std::vector<int>> colorTable;
+    std::vector<Vec3b> colorTable;
 
     void fillColorTable();
-    Mat processOutput(Mat output);
+    Mat processOutput(Mat output, int height, int width);
+    Mat mixImages(Mat input);
 
 public slots:
     void compute();
