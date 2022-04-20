@@ -231,6 +231,9 @@
       <height>26</height>
      </rect>
     </property>
+    <property name="maximum">
+     <number>500</number>
+    </property>
    </widget>
    <widget class="QSpinBox" name="imgWSpb">
     <property name="geometry">
@@ -240,6 +243,9 @@
       <width>48</width>
       <height>26</height>
      </rect>
+    </property>
+    <property name="maximum">
+     <number>500</number>
     </property>
    </widget>
    <widget class="QScrollBar" name="catColorBar">

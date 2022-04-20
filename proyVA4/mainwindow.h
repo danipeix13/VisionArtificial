@@ -47,6 +47,7 @@ private:
     std::vector<Vec3b> colorTable;
 
     void fillColorTable();
+    Size adjustSize(Mat fileImage);
     Mat processOutput(Mat output, int height, int width);
     Mat mixImages(Mat input);
 

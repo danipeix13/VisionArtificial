@@ -212,6 +212,7 @@ void ImgViewer::paintEvent ( QPaintEvent * )
 	QString s;
 	QPainter painter ( this );
 	painter.setRenderHint(QPainter::HighQualityAntialiasing);
+    this->resize(width, height);
 
     if(!ocvimg->empty())
     {

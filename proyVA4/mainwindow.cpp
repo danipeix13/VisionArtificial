@@ -57,6 +57,9 @@ void MainWindow::compute()
         cvtColor(colorImage, grayImage, COLOR_BGR2GRAY);
         cvtColor(colorImage, colorImage, COLOR_BGR2RGB);
 
+        ui->imgHSpb->setValue(240);
+        ui->imgWSpb->setValue(320);
+
     }
 
 
@@ -109,6 +112,9 @@ void MainWindow::loadImage()
     else
     {
         Mat fileImage = imread(fileName.toStdString());
+        Size imgSize = adjustSize(fileImage);
+        ui->imgHSpb->setValue(imgSize.height);
+        ui->imgWSpb->setValue(imgSize.width);
         cv::resize(fileImage, fileImage, Size(320,240));
         cvtColor(fileImage, grayImage, COLOR_BGR2GRAY);
         cvtColor(fileImage, colorImage, COLOR_BGR2RGB);
@@ -167,36 +173,58 @@ void MainWindow::fillColorTable()
     else
         qDebug() << "The file is closed";
 
-    for (Vec3b cat : colorTable)
+//    for (Vec3b cat : colorTable)
+//    {
+//        qDebug() << cat[0] << cat[1] << cat[2];
+//    }
+}
+
+Size MainWindow::adjustSize(Mat fileImage)
+{
+    int height = fileImage.rows,
+         width = fileImage.cols;
+
+    if(height > width && height > 500)
     {
-        qDebug() << cat[0] << cat[1] << cat[2];
+        width = 500 / (height * 1.0 / width);
+        height = 500;
     }
+    else if(width > height && width > 500)
+    {
+        height = 500 / (width * 1.0 / height);
+        width = 500;
+    }
+
+    return Size(width, height);
 }
 
 void MainWindow::segmentImage()
 {
+    int height = ui->imgHSpb->value(),
+         width = ui->imgWSpb->value();
     Scalar meanRgbValue = cv::mean(colorImage);
-    qInfo() << colorImage.rows << colorImage.cols;
-    Size imgSize = Size(colorImage.cols, colorImage.rows); //TODO valores de usuario
+    Size imgSize = Size(width, height); //TODO valores de usuario
     Mat auxImage = dnn::blobFromImage(colorImage, 1.0, imgSize, meanRgbValue, true);
 
     net.setInput(auxImage);
 
     Mat output = net.forward();
 
-    Mat segmentedImage = processOutput(output, colorImage.rows, colorImage.cols);//TODO valores de usuario
+    Mat segmentedImage = processOutput(output, height, width);//TODO valores de usuario
+
+    qDebug() << "segmentedImage SIZE" << segmentedImage.rows << segmentedImage.cols;
+    cv::resize(segmentedImage, segmentedImage, Size(320, 240), INTER_NEAREST);
+    qDebug() << "segmentedImage NEW SIZE" << segmentedImage.rows << segmentedImage.cols;
 
     Mat result = mixImages(segmentedImage);
+    qDebug() << "MIX IMAGES";
     result.copyTo(destColorImage);
-
+    qDebug() << "COPYTO";
 }
 
 Mat MainWindow::processOutput(Mat output, int height, int width)
 {
-    qInfo() << height << width;
-
     Mat categories = Mat(height, width, CV_8UC3);
-    qInfo() << "post categories";
     for(int i = 0; i < height; i++)
     {
         for(int j = 0; j < width; j++)
@@ -219,15 +247,14 @@ Mat MainWindow::processOutput(Mat output, int height, int width)
 
 Mat MainWindow::mixImages(Mat input)
 {
-    Mat output = Mat(input.rows, input.cols, CV_8UC3);
-    float p = ui->catColorBar->value() / 100;
+    float p = ui->catColorBar->value() / 100.0;
     for(int i = 0; i < input.rows; i++)
-    {
         for(int j = 0; j < input.cols; j++)
         {
-
+            input.at<Vec3b>(Point(j, i)) *= p;
+            input.at<Vec3b>(Point(j, i)) += (1 - p) * colorImage.at<Vec3b>(Point(j, i));
         }
-    }
+    return input;
 }
 
 
