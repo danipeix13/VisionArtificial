@@ -19,4 +19,5 @@ HEADERS  += mainwindow.h \
 INCLUDEPATH += /usr/include/opencv4 /usr/local/include/opencv4
 LIBS += -L/usr/lib -L/usr/local/lib -lopencv_imgproc -lopencv_videoio -lopencv_imgcodecs -lopencv_core -lopencv_highgui -lopencv_features2d -lopencv_flann -lopencv_video -lopencv_calib3d -lopencv_dnn
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui\
+    lFilterForm.ui

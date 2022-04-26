@@ -10,19 +10,32 @@
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
 #include <opencv2/dnn/dnn.hpp>
+
 #include <QtWidgets/QFileDialog>
 #include <iostream>
 #include <fstream>
+#include <ui_lFilterForm.h>
+
+#include <QListWidgetItem>
+#include <QCheckBox>
 
 #include <imgviewer.h>
-
-
 
 using namespace cv;
 
 namespace Ui {
     class MainWindow;
 }
+
+class LFilterDialog : public QDialog, public Ui::LFilterForm
+{
+    Q_OBJECT
+
+    public:
+    LFilterDialog(QDialog *parent=0) : QDialog(parent){
+        setupUi(this);
+    }
+};
 
 class MainWindow : public QMainWindow
 {
@@ -42,6 +55,7 @@ private:
     Mat destColorImage, destGrayImage;
     bool winSelected;
     Rect imageWindow;
+    LFilterDialog lFilterDialog;
 
     dnn::Net net;
     std::vector<Vec3b> colorTable;
@@ -59,6 +73,7 @@ public slots:
     void selectWindow(QPointF p, int w, int h);
     void deselectWindow(QPointF p);
     void segmentImage();
+    void readCategories();
 
 };
 

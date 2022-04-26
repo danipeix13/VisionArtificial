@@ -28,10 +28,16 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(visorS,SIGNAL(mouseClic(QPointF)),this,SLOT(deselectWindow(QPointF)));
     connect(ui->loadBtn,SIGNAL(clicked()),this,SLOT(loadImage()));
     connect(ui->segmentBtn,SIGNAL(clicked()),this,SLOT(segmentImage()));
+    connect(ui->segmentBtn,SIGNAL(clicked()),this,SLOT(segmentImage()));
+
+    connect(ui->selectCategoriesBtn,SIGNAL(clicked()),&lFilterDialog,SLOT(show()));
+    connect(lFilterDialog.pushButton,SIGNAL(clicked()),&lFilterDialog,SLOT(hide()));
+
     timer.start(30);
 
     net = cv::dnn::readNetFromCaffe("../proyVA4/fcn/fcn.prototxt", "../proyVA4/fcn/fcn.caffemodel");
     fillColorTable();
+    readCategories();
 }
 
 MainWindow::~MainWindow()
@@ -255,6 +261,27 @@ Mat MainWindow::mixImages(Mat input)
             input.at<Vec3b>(Point(j, i)) += (1 - p) * colorImage.at<Vec3b>(Point(j, i));
         }
     return input;
+}
+
+void MainWindow::readCategories()
+{
+    String fileName = "../proyVA4/fcn/fcn-classes.txt";
+    std::fstream colors;
+    colors.open(fileName.c_str(), std::ios::in);
+
+    if(colors.is_open())
+    {
+        std::string name;
+        getline(colors, name);
+        while(name != "")
+        {
+            lFilterDialog.listWidget->addItem(QString(name.c_str()));
+            lFilterDialog.listWidget->item(lFilterDialog.listWidget->count()-1)->setCheckState(Qt::Checked);
+            getline(colors, name);
+        }
+    }
+    else
+        qDebug() << "The file is closed";
 }
 
 
