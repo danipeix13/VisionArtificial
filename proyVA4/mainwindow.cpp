@@ -31,7 +31,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->segmentBtn,SIGNAL(clicked()),this,SLOT(segmentImage()));
 
     connect(ui->selectCategoriesBtn,SIGNAL(clicked()),&lFilterDialog,SLOT(show()));
-    connect(lFilterDialog.pushButton,SIGNAL(clicked()),&lFilterDialog,SLOT(hide()));
+    connect(lFilterDialog.pushButton,SIGNAL(clicked()),this,SLOT(updateCategories()));
 
     timer.start(30);
 
@@ -245,7 +245,10 @@ Mat MainWindow::processOutput(Mat output, int height, int width)
                     bestCatIndex = k;
                 }
             }
-            categories.at<Vec3b>(Point(j, i)) = colorTable.at(bestCatIndex);
+            if(availableCategories[bestCatIndex])
+                categories.at<Vec3b>(Point(j, i)) = colorTable.at(bestCatIndex);
+            else
+                categories.at<Vec3b>(Point(j, i)) = {0, 0, 0};
         }
     }
     return categories;
@@ -277,11 +280,24 @@ void MainWindow::readCategories()
         {
             lFilterDialog.listWidget->addItem(QString(name.c_str()));
             lFilterDialog.listWidget->item(lFilterDialog.listWidget->count()-1)->setCheckState(Qt::Checked);
+            availableCategories.push_back(true);
             getline(colors, name);
         }
+        availableCategories.resize(availableCategories.size());
     }
     else
         qDebug() << "The file is closed";
+}
+
+
+void MainWindow::updateCategories()
+{
+    for (int i = 0; i < availableCategories.size(); i++)
+    {
+        availableCategories[i] = lFilterDialog.listWidget->item(i)->checkState() == Qt::Checked;
+        qDebug() << i << availableCategories[i];
+    }
+    lFilterDialog.hide();
 }
 
 

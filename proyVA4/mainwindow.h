@@ -59,6 +59,7 @@ private:
 
     dnn::Net net;
     std::vector<Vec3b> colorTable;
+    std::vector<bool> availableCategories;
 
     void fillColorTable();
     Size adjustSize(Mat fileImage);
@@ -74,7 +75,7 @@ public slots:
     void deselectWindow(QPointF p);
     void segmentImage();
     void readCategories();
-
+    void updateCategories();
 };
 
 
