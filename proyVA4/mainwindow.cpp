@@ -17,9 +17,12 @@ MainWindow::MainWindow(QWidget *parent) :
     destColorImage.setTo(0);
     destGrayImage.create(240,320,CV_8UC1);
     destGrayImage.setTo(0);
+    backgroundImage.create(480,640,CV_8UC3);
+    backgroundImage.setTo(0);
 
     visorS = new ImgViewer(&colorImage, ui->imageFrameS);
     visorD = new ImgViewer(&destColorImage, ui->imageFrameD);
+    visorC = new ImgViewer(&backgroundImage, combineDialog.combiningFrm);
 
     connect(&timer,SIGNAL(timeout()),this,SLOT(compute()));
     connect(ui->captureButton,SIGNAL(clicked(bool)),this,SLOT(start_stop_capture(bool)));
@@ -28,7 +31,13 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(visorS,SIGNAL(mouseClic(QPointF)),this,SLOT(deselectWindow(QPointF)));
     connect(ui->loadBtn,SIGNAL(clicked()),this,SLOT(loadImage()));
     connect(ui->segmentBtn,SIGNAL(clicked()),this,SLOT(segmentImage()));
-    connect(ui->segmentBtn,SIGNAL(clicked()),this,SLOT(segmentImage()));
+    connect(ui->combineBtn,SIGNAL(clicked()),this,SLOT(combineImages()));
+
+    // CombineDialog
+    connect(combineDialog.loadBtn,SIGNAL(clicked()),this,SLOT(loadBackground()));
+    connect(combineDialog.saveBtn,SIGNAL(clicked()),this,SLOT(saveImage()));
+    connect(combineDialog.pasteBtn,SIGNAL(clicked()),this,SLOT(pasteImage()));
+    connect(combineDialog.closeBtn,SIGNAL(clicked()),this,SLOT(closeDialog()));
 
     connect(ui->selectCategoriesBtn,SIGNAL(clicked()),&lFilterDialog,SLOT(show()));
     connect(lFilterDialog.pushButton,SIGNAL(clicked()),this,SLOT(updateCategories()));
@@ -104,6 +113,7 @@ void MainWindow::change_color_gray(bool color)
         visorS->setImage(&grayImage);
         visorD->setImage(&destGrayImage);
     }
+    visorC->setImage(&backgroundImage);
 }
 
 void MainWindow::loadImage()
@@ -300,4 +310,44 @@ void MainWindow::updateCategories()
     lFilterDialog.hide();
 }
 
+void MainWindow::combineImages()
+{
+    combineDialog.show();
+}
+
+void MainWindow::closeDialog()
+{
+    ;
+}
+
+void MainWindow::loadBackground()
+{
+    timer.stop();
+    auto fileName = QFileDialog::getOpenFileName(this,
+        tr("Open Image"), "/home/alumno/Imágenes", tr("Image Files (*.png *.jpg *.bmp)"));
+    timer.start(30);
+
+    if (fileName == "")
+        qDebug() << __FUNCTION__ << "No image loaded";
+    else
+    {
+        Mat fileImage = imread(fileName.toStdString());
+        Size imgSize = adjustSize(fileImage);
+        ui->imgHSpb->setValue(imgSize.height);
+        ui->imgWSpb->setValue(imgSize.width);
+        cv::resize(fileImage, fileImage, Size(640, 480));
+        cvtColor(fileImage, backgroundImage, COLOR_BGR2RGB);
+        visorC->update();
+    }
+}
+
+void MainWindow::saveImage()
+{
+    ;
+}
+
+void MainWindow::pasteImage()
+{
+    ;
+}
 

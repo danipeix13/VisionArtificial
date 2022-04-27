@@ -15,6 +15,7 @@
 #include <iostream>
 #include <fstream>
 #include <ui_lFilterForm.h>
+#include <ui_combineForm.h>
 
 #include <QListWidgetItem>
 #include <QCheckBox>
@@ -37,6 +38,16 @@ class LFilterDialog : public QDialog, public Ui::LFilterForm
     }
 };
 
+class CombineDialog : public QDialog, public Ui::CombineForm
+{
+    Q_OBJECT
+
+    public:
+    CombineDialog(QDialog *parent=0) : QDialog(parent){
+        setupUi(this);
+    }
+};
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -50,12 +61,13 @@ private:
     QTimer timer;
 
     VideoCapture *cap;
-    ImgViewer *visorS, *visorD;
-    Mat colorImage, grayImage;
+    ImgViewer *visorS, *visorD, *visorC;
+    Mat colorImage, grayImage, backgroundImage;
     Mat destColorImage, destGrayImage;
     bool winSelected;
     Rect imageWindow;
     LFilterDialog lFilterDialog;
+    CombineDialog combineDialog;
 
     dnn::Net net;
     std::vector<Vec3b> colorTable;
@@ -76,6 +88,11 @@ public slots:
     void segmentImage();
     void readCategories();
     void updateCategories();
+    void combineImages();
+    void closeDialog();
+    void saveImage();
+    void loadBackground();
+    void pasteImage();
 };
 
 
