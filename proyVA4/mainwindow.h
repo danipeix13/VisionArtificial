@@ -62,12 +62,13 @@ private:
 
     VideoCapture *cap;
     ImgViewer *visorS, *visorD, *visorC;
-    Mat colorImage, grayImage, backgroundImage;
+    Mat colorImage, grayImage;
     Mat destColorImage, destGrayImage;
     bool winSelected;
     Rect imageWindow;
     LFilterDialog lFilterDialog;
     CombineDialog combineDialog;
+    Mat backgroundImage, combinedImage;
 
     dnn::Net net;
     std::vector<Vec3b> colorTable;
@@ -93,6 +94,7 @@ public slots:
     void saveImage();
     void loadBackground();
     void pasteImage();
+    void copyObject(QPointF position);
 };
 
 

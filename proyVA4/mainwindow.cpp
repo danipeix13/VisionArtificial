@@ -17,12 +17,12 @@ MainWindow::MainWindow(QWidget *parent) :
     destColorImage.setTo(0);
     destGrayImage.create(240,320,CV_8UC1);
     destGrayImage.setTo(0);
-    backgroundImage.create(480,640,CV_8UC3);
-    backgroundImage.setTo(0);
+    combinedImage.create(480,640,CV_8UC3);
+    combinedImage.setTo(0);
 
     visorS = new ImgViewer(&colorImage, ui->imageFrameS);
     visorD = new ImgViewer(&destColorImage, ui->imageFrameD);
-    visorC = new ImgViewer(&backgroundImage, combineDialog.combiningFrm);
+    visorC = new ImgViewer(&combinedImage, combineDialog.combiningFrm);
 
     connect(&timer,SIGNAL(timeout()),this,SLOT(compute()));
     connect(ui->captureButton,SIGNAL(clicked(bool)),this,SLOT(start_stop_capture(bool)));
@@ -41,6 +41,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->selectCategoriesBtn,SIGNAL(clicked()),&lFilterDialog,SLOT(show()));
     connect(lFilterDialog.pushButton,SIGNAL(clicked()),this,SLOT(updateCategories()));
+    connect(visorC,SIGNAL(mouseClic(QPointF)),this,SLOT(copyObject(QPointF)));
 
     timer.start(30);
 
@@ -88,6 +89,7 @@ void MainWindow::compute()
 
     visorS->update();
     visorD->update();
+    visorC->update();
 
 }
 
@@ -120,7 +122,7 @@ void MainWindow::loadImage()
 {
     timer.stop();
     auto fileName = QFileDialog::getOpenFileName(this,
-        tr("Open Image"), "/home/alumno/Imágenes", tr("Image Files (*.png *.jpg *.bmp)"));
+        tr("Open Image"), "/home/alumno/Imágenes", tr("Image Files (*.png *.jpg *.bmp *.jpeg *.webp)"));
     timer.start(30);
 
     if (fileName == "")
@@ -324,7 +326,7 @@ void MainWindow::loadBackground()
 {
     timer.stop();
     auto fileName = QFileDialog::getOpenFileName(this,
-        tr("Open Image"), "/home/alumno/Imágenes", tr("Image Files (*.png *.jpg *.bmp)"));
+        tr("Open Image"), "/home/alumno/Imágenes", tr("Image Files (*.png *.jpg *.bmp *.jpeg *.webp)"));
     timer.start(30);
 
     if (fileName == "")
@@ -336,18 +338,43 @@ void MainWindow::loadBackground()
         ui->imgHSpb->setValue(imgSize.height);
         ui->imgWSpb->setValue(imgSize.width);
         cv::resize(fileImage, fileImage, Size(640, 480));
-        cvtColor(fileImage, backgroundImage, COLOR_BGR2RGB);
-        visorC->update();
+        cvtColor(fileImage, combinedImage, COLOR_BGR2RGB);
+        combinedImage.copyTo(backgroundImage);
     }
 }
 
 void MainWindow::saveImage()
 {
-    ;
+    timer.stop();
+    auto fileName = QFileDialog::getSaveFileName(this,
+        tr("Save Image"), "/home/alumno/Imágenes/image.jpg", tr("Image Files (*.png *.jpg *.bmp)"));
+    timer.start(30);
+
+    Mat aux;
+    cvtColor(combinedImage, aux, COLOR_RGB2BGR);
+    imwrite(fileName.toStdString(), aux);
 }
 
 void MainWindow::pasteImage()
 {
-    ;
+    winSelected = false;
+    combinedImage.copyTo(backgroundImage);
 }
 
+void MainWindow::copyObject(QPointF position)
+{
+    if(winSelected)
+    {
+        Mat objectWindow, targetInBackground, mask;
+
+        backgroundImage.copyTo(combinedImage);
+
+        objectWindow = Mat(colorImage,imageWindow);
+        mask = Mat(destColorImage,imageWindow);
+        cvtColor(mask, mask, COLOR_RGB2GRAY);
+        imshow("MASK", mask);
+        waitKey(1);
+        targetInBackground = Mat(combinedImage, Rect(position.x(), position.y(), imageWindow.width, imageWindow.height));
+        objectWindow.copyTo(targetInBackground, mask);
+    }
+}
