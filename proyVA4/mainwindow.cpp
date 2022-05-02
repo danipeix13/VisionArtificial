@@ -31,13 +31,13 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(visorS,SIGNAL(mouseClic(QPointF)),this,SLOT(deselectWindow(QPointF)));
     connect(ui->loadBtn,SIGNAL(clicked()),this,SLOT(loadImage()));
     connect(ui->segmentBtn,SIGNAL(clicked()),this,SLOT(segmentImage()));
-    connect(ui->combineBtn,SIGNAL(clicked()),this,SLOT(combineImages()));
+    connect(ui->combineBtn,SIGNAL(clicked()),&combineDialog,SLOT(show()));
 
     // CombineDialog
     connect(combineDialog.loadBtn,SIGNAL(clicked()),this,SLOT(loadBackground()));
     connect(combineDialog.saveBtn,SIGNAL(clicked()),this,SLOT(saveImage()));
     connect(combineDialog.pasteBtn,SIGNAL(clicked()),this,SLOT(pasteImage()));
-    connect(combineDialog.closeBtn,SIGNAL(clicked()),this,SLOT(closeDialog()));
+    connect(combineDialog.closeBtn,SIGNAL(clicked()),&combineDialog,SLOT(hide()));
 
     connect(ui->selectCategoriesBtn,SIGNAL(clicked()),&lFilterDialog,SLOT(show()));
     connect(lFilterDialog.pushButton,SIGNAL(clicked()),this,SLOT(updateCategories()));
@@ -64,8 +64,6 @@ MainWindow::~MainWindow()
 
 void MainWindow::compute()
 {
-
-    //Captura de imagen
     if(ui->captureButton->isChecked() && cap->isOpened())
     {
         *cap >> colorImage;
@@ -75,14 +73,7 @@ void MainWindow::compute()
 
         ui->imgHSpb->setValue(240);
         ui->imgWSpb->setValue(320);
-
     }
-
-
-    //En este punto se debe incluir el código asociado con el procesamiento de cada captura
-
-
-    //Actualización de los visores
 
     if(winSelected)
         visorS->drawSquare(QRect(imageWindow.x, imageWindow.y, imageWindow.width,imageWindow.height), Qt::green );
@@ -90,7 +81,6 @@ void MainWindow::compute()
     visorS->update();
     visorD->update();
     visorC->update();
-
 }
 
 void MainWindow::start_stop_capture(bool start)
@@ -190,11 +180,6 @@ void MainWindow::fillColorTable()
     }
     else
         qDebug() << "The file is closed";
-
-//    for (Vec3b cat : colorTable)
-//    {
-//        qDebug() << cat[0] << cat[1] << cat[2];
-//    }
 }
 
 Size MainWindow::adjustSize(Mat fileImage)
@@ -221,23 +206,23 @@ void MainWindow::segmentImage()
     int height = ui->imgHSpb->value(),
          width = ui->imgWSpb->value();
     Scalar meanRgbValue = cv::mean(colorImage);
-    Size imgSize = Size(width, height); //TODO valores de usuario
+    Size imgSize = Size(width, height);
     Mat auxImage = dnn::blobFromImage(colorImage, 1.0, imgSize, meanRgbValue, true);
 
     net.setInput(auxImage);
 
     Mat output = net.forward();
 
-    Mat segmentedImage = processOutput(output, height, width);//TODO valores de usuario
+    Mat segmentedImage = processOutput(output, height, width);
 
-    qDebug() << "segmentedImage SIZE" << segmentedImage.rows << segmentedImage.cols;
+    //qDebug() << "segmentedImage SIZE" << segmentedImage.rows << segmentedImage.cols;
     cv::resize(segmentedImage, segmentedImage, Size(320, 240), INTER_NEAREST);
-    qDebug() << "segmentedImage NEW SIZE" << segmentedImage.rows << segmentedImage.cols;
+    //qDebug() << "segmentedImage NEW SIZE" << segmentedImage.rows << segmentedImage.cols;
 
     Mat result = mixImages(segmentedImage);
-    qDebug() << "MIX IMAGES";
+    //qDebug() << "MIX IMAGES";
     result.copyTo(destColorImage);
-    qDebug() << "COPYTO";
+    //qDebug() << "COPYTO";
 }
 
 Mat MainWindow::processOutput(Mat output, int height, int width)
@@ -312,16 +297,6 @@ void MainWindow::updateCategories()
     lFilterDialog.hide();
 }
 
-void MainWindow::combineImages()
-{
-    combineDialog.show();
-}
-
-void MainWindow::closeDialog()
-{
-    ;
-}
-
 void MainWindow::loadBackground()
 {
     timer.stop();
@@ -372,9 +347,14 @@ void MainWindow::copyObject(QPointF position)
         objectWindow = Mat(colorImage,imageWindow);
         mask = Mat(destColorImage,imageWindow);
         cvtColor(mask, mask, COLOR_RGB2GRAY);
-        imshow("MASK", mask);
-        waitKey(1);
-        targetInBackground = Mat(combinedImage, Rect(position.x(), position.y(), imageWindow.width, imageWindow.height));
+
+        int x = position.x(), y = position.y();
+        if(x + objectWindow.cols > backgroundImage.cols)
+            x = backgroundImage.cols - objectWindow.cols;
+        if(y + objectWindow.rows > backgroundImage.rows)
+            y = backgroundImage.rows - objectWindow.rows;
+
+        targetInBackground = Mat(combinedImage, Rect(x, y, imageWindow.width, imageWindow.height));
         objectWindow.copyTo(targetInBackground, mask);
     }
 }

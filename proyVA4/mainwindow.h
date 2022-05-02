@@ -89,8 +89,6 @@ public slots:
     void segmentImage();
     void readCategories();
     void updateCategories();
-    void combineImages();
-    void closeDialog();
     void saveImage();
     void loadBackground();
     void pasteImage();
