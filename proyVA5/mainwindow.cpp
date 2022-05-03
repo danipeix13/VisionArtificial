@@ -16,15 +16,19 @@ MainWindow::MainWindow(QWidget *parent) :
     grayImage.create(240,320,CV_8UC1);
     destColorImage.create(240,320,CV_8UC3);
     destGrayImage.create(240,320,CV_8UC1);
+    dispImage.create(240,320,CV_8UC1);
+    dispCheckImage.create(240,320,CV_8UC1);
 
     visorS = new ImgViewer(&grayImage, ui->imageFrameS);
     visorD = new ImgViewer(&destGrayImage, ui->imageFrameD);
+    visorDisp = new ImgViewer(&dispImage, ui->dispFrm);
+    visorTrueDisp = new ImgViewer(&dispCheckImage, ui->dispCheckFrm);
 
     segmentedImage.create(240,320,CV_32SC1);
 
     connect(&timer,SIGNAL(timeout()),this,SLOT(compute()));
-    connect(ui->captureButton,SIGNAL(clicked(bool)),this,SLOT(start_stop_capture(bool)));
-    connect(ui->colorButton,SIGNAL(clicked(bool)),this,SLOT(change_color_gray(bool)));
+    //connect(ui->captureButton,SIGNAL(clicked(bool)),this,SLOT(start_stop_capture(bool)));
+    //connect(ui->colorButton,SIGNAL(clicked(bool)),this,SLOT(change_color_gray(bool)));
     connect(visorS,SIGNAL(mouseSelection(QPointF, int, int)),this,SLOT(selectWindow(QPointF, int, int)));
     connect(visorS,SIGNAL(mouseClic(QPointF)),this,SLOT(deselectWindow(QPointF)));
     connect(ui->loadButton,SIGNAL(clicked()),this,SLOT(loadImageFromFile()));
@@ -39,11 +43,15 @@ MainWindow::~MainWindow()
     delete cap;
     delete visorS;
     delete visorD;
+    delete visorDisp;
+    delete visorTrueDisp;
     grayImage.release();
     colorImage.release();
     destGrayImage.release();
     destColorImage.release();
     segmentedImage.release();
+    dispImage.release();
+    dispCheckImage.release();
 
 }
 
@@ -61,9 +69,9 @@ void MainWindow::compute()
 
     }
 
-    regionGrowing(grayImage);
+    //regionGrowing(grayImage);
 
-    colorSegmentedImage();
+    //colorSegmentedImage();
 
     if(winSelected)
     {
@@ -71,8 +79,62 @@ void MainWindow::compute()
     }
     visorS->update();
     visorD->update();
+    visorDisp->update();
+    visorTrueDisp->update();
 
 }
+
+
+
+
+
+
+void MainWindow::obtainCorners()
+{
+    Mat result, fix, dispMat;
+    std::vector<Point2f> leftImageCorners, rightImageCorners;
+
+    goodFeaturesToTrack(grayImage, leftImageCorners, 0, 0.1, 10);
+    goodFeaturesToTrack(destGrayImage, rightImageCorners, 0, 0.1, 10);
+
+    for(int i = 0 ; i < leftImageCorners.size() ; i++)
+    {
+        Mat leftImageWindow = Mat(grayImage, getRect(leftImageCorners[i]));
+
+        for(int j = 0; j < rightImageCorners.size(); i++)
+        {
+            Point left = leftImageCorners[i], right =  rightImageCorners[j];
+
+            if(left.x >= right.x)
+            {
+                Mat rightImageWindow = Mat(destGrayImage, getRect(rightImageCorners[i]));
+                cv::matchTemplate(leftImageWindow, rightImageWindow, result, TM_CCOEFF_NORMED);
+
+            }
+
+
+
+        }
+
+    }
+}
+
+Rect MainWindow::getRect(Point2f src)
+{
+    return Rect(Point(src.x-5, src.y-5), Point(src.x+5, src.y+5));
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 void MainWindow::regionGrowing(Mat image)
 {
@@ -245,27 +307,38 @@ void MainWindow::loadImageFromFile()
     ui->captureButton->setText("Start capture");
     disconnect(&timer,SIGNAL(timeout()),this,SLOT(compute()));
 
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Load image from file"),".", tr("Images (*.png *.xpm *.jpg)"));
-    if(!fileName.isNull())
+    QStringList nameList = QFileDialog::getOpenFileNames(this, tr("Load image from file"),".", tr("Images (*.png *.xpm *.jpg)"));
+
+    if(nameList.size() == 2)
     {
-        Mat imfromfile = imread(fileName.toStdString(), IMREAD_COLOR);
-        Size imSize = imfromfile.size();
-        if(imSize.width!=320 || imSize.height!=240)
-            cv::resize(imfromfile, imfromfile, Size(320, 240));
-
-        if(imfromfile.channels()==1)
+        bool dst = true;
+        for (QString name: nameList)
         {
-            imfromfile.copyTo(grayImage);
-            cvtColor(grayImage,colorImage, COLOR_GRAY2RGB);
-        }
+            Mat imfromfile = imread(name.toStdString(), IMREAD_COLOR);
+            Size imSize = imfromfile.size();
+            if(imSize.width!=320 || imSize.height!=240)
+                cv::resize(imfromfile, imfromfile, Size(320, 240));
 
-        if(imfromfile.channels()==3)
-        {
-            imfromfile.copyTo(colorImage);
-            cvtColor(colorImage, colorImage, COLOR_BGR2RGB);
-            cvtColor(colorImage, grayImage, COLOR_RGB2GRAY);
-        }
+            Mat dest;
+            if (dst)
+                dest = grayImage;
+            else
+                dest = destGrayImage;
 
+            if(imfromfile.channels()==1)
+            {
+                imfromfile.copyTo(grayImage);
+                cvtColor(grayImage,dest, COLOR_GRAY2RGB);
+            }
+
+            if(imfromfile.channels()==3)
+            {
+                imfromfile.copyTo(colorImage);
+                cvtColor(colorImage, colorImage, COLOR_BGR2RGB);
+                cvtColor(colorImage, dest, COLOR_RGB2GRAY);
+            }
+            dst = !dst;
+        }
     }
     connect(&timer,SIGNAL(timeout()),this,SLOT(compute()));
 

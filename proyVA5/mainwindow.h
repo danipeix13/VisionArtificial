@@ -42,8 +42,8 @@ private:
     QTimer timer;
 
     VideoCapture *cap;
-    ImgViewer *visorS, * visorD;
-    Mat colorImage, grayImage, destColorImage, destGrayImage;
+    ImgViewer *visorS, * visorD, *visorDisp, *visorTrueDisp;
+    Mat colorImage, grayImage, destColorImage, destGrayImage, dispImage, dispCheckImage;
     Mat segmentedImage;
     bool winSelected;
     Rect imageWindow;
@@ -53,6 +53,8 @@ private:
     int copyRegion(Mat image, Mat maskImage, int id, Rect r, uchar & mgray);
     void colorSegmentedImage();
 
+    Rect getRect(Point2f src);
+
 public slots:
     void compute();
     void start_stop_capture(bool start);
@@ -61,6 +63,7 @@ public slots:
     void deselectWindow(QPointF p);
     void loadImageFromFile();
 
+    void obtainCorners();
 };
 
 
