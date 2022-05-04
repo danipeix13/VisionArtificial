@@ -43,11 +43,13 @@ private:
 
     VideoCapture *cap;
     ImgViewer *visorS, * visorD, *visorDisp, *visorTrueDisp;
-    Mat colorImage, grayImage, destColorImage, destGrayImage, dispImage, dispCheckImage;
+    Mat colorImage, grayImage, destColorImage, destGrayImage, dispImage, dispCheckImage, fixed;
     Mat segmentedImage;
     bool winSelected;
     Rect imageWindow;
     vector<RegSt> regionsList;
+    std::vector<Point2f> leftImageCorners, rightImageCorners;
+    std::vector<Vec4f> correspondencies;
 
     void regionGrowing(Mat image);
     int copyRegion(Mat image, Mat maskImage, int id, Rect r, uchar & mgray);

@@ -18,6 +18,9 @@ MainWindow::MainWindow(QWidget *parent) :
     destGrayImage.create(240,320,CV_8UC1);
     dispImage.create(240,320,CV_8UC1);
     dispCheckImage.create(240,320,CV_8UC1);
+    fixed.create(240,320,CV_8UC1);
+    fixed.setTo(0);
+    dispImage.setTo(0);
 
     visorS = new ImgViewer(&grayImage, ui->imageFrameS);
     visorD = new ImgViewer(&destGrayImage, ui->imageFrameD);
@@ -27,11 +30,17 @@ MainWindow::MainWindow(QWidget *parent) :
     segmentedImage.create(240,320,CV_32SC1);
 
     connect(&timer,SIGNAL(timeout()),this,SLOT(compute()));
+
+    // UI
     //connect(ui->captureButton,SIGNAL(clicked(bool)),this,SLOT(start_stop_capture(bool)));
     //connect(ui->colorButton,SIGNAL(clicked(bool)),this,SLOT(change_color_gray(bool)));
     connect(visorS,SIGNAL(mouseSelection(QPointF, int, int)),this,SLOT(selectWindow(QPointF, int, int)));
     connect(visorS,SIGNAL(mouseClic(QPointF)),this,SLOT(deselectWindow(QPointF)));
     connect(ui->loadButton,SIGNAL(clicked()),this,SLOT(loadImageFromFile()));
+    connect(ui->dispInitBtn,SIGNAL(clicked()),this,SLOT(obtainCorners()));
+
+
+
     timer.start(60);
 
 
@@ -68,10 +77,25 @@ void MainWindow::compute()
         cvtColor(colorImage, colorImage, COLOR_BGR2RGB);
 
     }
-
+//    obtainCorners();
     //regionGrowing(grayImage);
 
     //colorSegmentedImage();
+
+    if(ui->kpChbx->isChecked())
+    {
+        for (Point p : leftImageCorners)
+            visorS->drawSquare(QPointF(p.x, p.y), 2, 2, Qt::red);
+        for (Point p : rightImageCorners)
+            visorD->drawSquare(QPointF(p.x, p.y), 2, 2, Qt::red);
+
+        for (Vec4f c : correspondencies)
+        {
+            visorS->drawSquare(QPointF(c[0], c[1]), 2, 2, Qt::green);
+            visorD->drawSquare(QPointF(c[2], c[3]), 2, 2, Qt::green);
+        }
+
+    }
 
     if(winSelected)
     {
@@ -91,37 +115,72 @@ void MainWindow::compute()
 
 void MainWindow::obtainCorners()
 {
-    Mat result, fix, dispMat;
-    std::vector<Point2f> leftImageCorners, rightImageCorners;
+    leftImageCorners.clear();
+    rightImageCorners.clear();
+    correspondencies.clear();
 
-    goodFeaturesToTrack(grayImage, leftImageCorners, 0, 0.1, 10);
-    goodFeaturesToTrack(destGrayImage, rightImageCorners, 0, 0.1, 10);
+    goodFeaturesToTrack(grayImage, leftImageCorners, 0, 0.01, 10);
+    goodFeaturesToTrack(destGrayImage, rightImageCorners, 0, 0.01, 10);
 
     for(int i = 0 ; i < leftImageCorners.size() ; i++)
     {
-        Mat leftImageWindow = Mat(grayImage, getRect(leftImageCorners[i]));
+        qDebug() << __FUNCTION__ << "L match:" << i;
+        float bestResult = -5.0;
+        Point2f bestMatch, left = leftImageCorners[i];
+        Rect leftRect = getRect(left);
 
-        for(int j = 0; j < rightImageCorners.size(); i++)
+
+        if(leftRect.x >= 0 && leftRect.y > 0 && leftRect.x + leftRect.width < 320 && leftRect.y + leftRect.height < 240)
         {
-            Point left = leftImageCorners[i], right =  rightImageCorners[j];
-
-            if(left.x >= right.x)
+            Mat leftImageWindow = Mat(grayImage, leftRect), result;
+            for(int j = 0; j < rightImageCorners.size(); j++)
             {
-                Mat rightImageWindow = Mat(destGrayImage, getRect(rightImageCorners[i]));
-                cv::matchTemplate(leftImageWindow, rightImageWindow, result, TM_CCOEFF_NORMED);
+        //            qDebug() << __FUNCTION__ << "  R match:" << j;
 
+                Point2f right =  rightImageCorners[j];
+
+                if((left.y == right.y || left.y == right.y-1 || left.y == right.y+1) && left.x >= right.x)
+                {
+                    Rect rightRect = getRect(right);
+                    if(rightRect.x >= 0 && rightRect.y > 0 && rightRect.x + rightRect.width < 320 && rightRect.y + rightRect.height < 240)
+                    {
+                        Mat rightImageWindow = Mat(destGrayImage, rightRect);
+                        qDebug() << __FUNCTION__ << "No explotes por favor :'(";
+                        cv::matchTemplate(leftImageWindow, rightImageWindow, result, TM_CCOEFF_NORMED);
+
+                        if (result.at<float>(Point(0,0)) > bestResult)
+                        {
+                            bestMatch = right;
+                            bestResult = result.at<float>(Point(0,0));
+                            qDebug() << __FUNCTION__ << "  Update:" << bestResult;
+                        }
+                    }
+                    else
+                        qDebug()<< __FUNCTION__ << "  VAYA :') en Y";
+                }
             }
-
-
-
         }
+        else
+            qDebug()<< __FUNCTION__ << "VAYA :') en X";
 
+
+        if (bestResult >= 0.8)
+        {
+            qDebug() << __FUNCTION__ << "MATCH FOUND FOR" << i;
+            fixed.at<uchar>(left.y, left.x) = 1;
+            dispImage.at<uchar>(left.y, left.x) = left.x - bestMatch.x;
+            correspondencies.push_back(Vec4f{left.x, left.y, bestMatch.x, bestMatch.y});
+        }
     }
+
 }
 
 Rect MainWindow::getRect(Point2f src)
 {
-    return Rect(Point(src.x-5, src.y-5), Point(src.x+5, src.y+5));
+    int margin = 6;
+    Rect r = Rect(Point(src.x-margin, src.y-margin), Point(src.x+margin, src.y+margin));
+    qInfo() << __FUNCTION__ << r.height + r.y << r.width + r.x;
+    return r;
 }
 
 
@@ -303,6 +362,9 @@ void MainWindow::deselectWindow(QPointF p)
 
 void MainWindow::loadImageFromFile()
 {
+
+    // view 1 && view5??
+
     ui->captureButton->setChecked(false);
     ui->captureButton->setText("Start capture");
     disconnect(&timer,SIGNAL(timeout()),this,SLOT(compute()));
