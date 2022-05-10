@@ -135,7 +135,7 @@ void MainWindow::obtainCorners()
             Mat leftImageWindow = Mat(grayImage, leftRect), result;
             for(int j = 0; j < rightImageCorners.size(); j++)
             {
-        //            qDebug() << __FUNCTION__ << "  R match:" << j;
+  //            qDebug() << __FUNCTION__ << "  R match:" << j;
 
                 Point2f right =  rightImageCorners[j];
 
@@ -169,9 +169,41 @@ void MainWindow::obtainCorners()
             qDebug() << __FUNCTION__ << "MATCH FOUND FOR" << i;
             fixed.at<uchar>(left.y, left.x) = 1;
             dispImage.at<uchar>(left.y, left.x) = left.x - bestMatch.x;
-            correspondencies.push_back(Vec4f{left.x, left.y, bestMatch.x, bestMatch.y});
+            correspondencies.push_back(Vec4i{left.x, left.y, bestMatch.x, bestMatch.y});
         }
     }
+
+    regionGrowing(grayImage);
+
+    int id, npoints, grayLevel;
+
+    for(int y = 0; y < dispImage.rows; y++)
+    {
+        for(int x = 0; x < dispImage.cols; x++)
+        {
+            if(fixed.at<int>(y, x) == 0)
+            {
+                id = segmentedImage.at<int>(y, x);
+                qDebug() << "ID:" << id;
+
+                if(id > -1)
+                {
+                    qDebug() << regionsList.size();
+                    //npoints = regionsList[id].npoints;
+                    qDebug() << "B";
+                    grayLevel = regionsList[id].gray;
+                    qDebug() << "C";
+                    segmentedImage.at<int>(y, x) = grayLevel;
+                    qDebug() << "D";
+
+                }
+            }
+        }
+    }
+    qDebug() << "ÑKULREJTGODYTW";
+
+    //segmentedImage.copyTo(dispImage);
+    colorSegmentedImage();
 
 }
 
@@ -297,7 +329,7 @@ void MainWindow::colorSegmentedImage()
         for(int x=0; x<320; x++)
         {
            id = segmentedImage.at<int>(y,x);
-           destGrayImage.at<uchar>(y,x) = regionsList[id].gray;
+           dispImage.at<uchar>(y,x) = regionsList[id].gray;
 
         }
 }

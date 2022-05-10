@@ -5,6 +5,7 @@
 #include <QFileDialog>
 
 #include <opencv2/core/core.hpp>
+#include <opencv2/core/mat.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/video/video.hpp>
@@ -23,6 +24,8 @@ using namespace std;
 typedef struct{
     uchar gray;
     int npoints;
+    int nfijos;
+    float dMedia;
 }RegSt;
 
 namespace Ui {
@@ -49,7 +52,7 @@ private:
     Rect imageWindow;
     vector<RegSt> regionsList;
     std::vector<Point2f> leftImageCorners, rightImageCorners;
-    std::vector<Vec4f> correspondencies;
+    std::vector<Vec4i> correspondencies;
 
     void regionGrowing(Mat image);
     int copyRegion(Mat image, Mat maskImage, int id, Rect r, uchar & mgray);
@@ -64,8 +67,9 @@ public slots:
     void selectWindow(QPointF p, int w, int h);
     void deselectWindow(QPointF p);
     void loadImageFromFile();
-
     void obtainCorners();
+
+
 };
 
 
