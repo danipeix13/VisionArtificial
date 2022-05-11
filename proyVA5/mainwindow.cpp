@@ -16,7 +16,8 @@ MainWindow::MainWindow(QWidget *parent) :
     grayImage.create(240,320,CV_8UC1);
     destColorImage.create(240,320,CV_8UC3);
     destGrayImage.create(240,320,CV_8UC1);
-    dispImage.create(240,320,CV_8UC1);
+    dispImage.create(240,320,CV_32FC1);
+    dispGray.create(240,320,CV_8UC1);
     dispCheckImage.create(240,320,CV_8UC1);
     fixed.create(240,320,CV_8UC1);
     fixed.setTo(0);
@@ -24,7 +25,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     visorS = new ImgViewer(&grayImage, ui->imageFrameS);
     visorD = new ImgViewer(&destGrayImage, ui->imageFrameD);
-    visorDisp = new ImgViewer(&dispImage, ui->dispFrm);
+    visorDisp = new ImgViewer(&dispGray, ui->dispFrm);
     visorTrueDisp = new ImgViewer(&dispCheckImage, ui->dispCheckFrm);
 
     segmentedImage.create(240,320,CV_32SC1);
@@ -108,23 +109,19 @@ void MainWindow::compute()
 
 }
 
-
-
-
-
-
 void MainWindow::obtainCorners()
 {
+    qDebug() << "obtainCorners";
+
     leftImageCorners.clear();
     rightImageCorners.clear();
     correspondencies.clear();
 
-    goodFeaturesToTrack(grayImage, leftImageCorners, 0, 0.01, 10);
-    goodFeaturesToTrack(destGrayImage, rightImageCorners, 0, 0.01, 10);
+    goodFeaturesToTrack(grayImage, leftImageCorners, 0, 0.01, 5);
+    goodFeaturesToTrack(destGrayImage, rightImageCorners, 0, 0.01, 5);
 
     for(int i = 0 ; i < leftImageCorners.size() ; i++)
     {
-        qDebug() << __FUNCTION__ << "L match:" << i;
         float bestResult = -5.0;
         Point2f bestMatch, left = leftImageCorners[i];
         Rect leftRect = getRect(left);
@@ -135,7 +132,6 @@ void MainWindow::obtainCorners()
             Mat leftImageWindow = Mat(grayImage, leftRect), result;
             for(int j = 0; j < rightImageCorners.size(); j++)
             {
-  //            qDebug() << __FUNCTION__ << "  R match:" << j;
 
                 Point2f right =  rightImageCorners[j];
 
@@ -145,65 +141,86 @@ void MainWindow::obtainCorners()
                     if(rightRect.x >= 0 && rightRect.y > 0 && rightRect.x + rightRect.width < 320 && rightRect.y + rightRect.height < 240)
                     {
                         Mat rightImageWindow = Mat(destGrayImage, rightRect);
-                        qDebug() << __FUNCTION__ << "No explotes por favor :'(";
                         cv::matchTemplate(leftImageWindow, rightImageWindow, result, TM_CCOEFF_NORMED);
 
                         if (result.at<float>(Point(0,0)) > bestResult)
                         {
                             bestMatch = right;
                             bestResult = result.at<float>(Point(0,0));
-                            qDebug() << __FUNCTION__ << "  Update:" << bestResult;
                         }
                     }
-                    else
-                        qDebug()<< __FUNCTION__ << "  VAYA :') en Y";
+                    //else qDebug()<< __FUNCTION__ << "  VAYA :') en Y";
                 }
             }
         }
-        else
-            qDebug()<< __FUNCTION__ << "VAYA :') en X";
+        //else qDebug()<< __FUNCTION__ << "VAYA :') en X";
 
 
         if (bestResult >= 0.8)
         {
-            qDebug() << __FUNCTION__ << "MATCH FOUND FOR" << i;
             fixed.at<uchar>(left.y, left.x) = 1;
-            dispImage.at<uchar>(left.y, left.x) = left.x - bestMatch.x;
+            dispImage.at<float>(left.y, left.x) = left.x - bestMatch.x;
             correspondencies.push_back(Vec4i{left.x, left.y, bestMatch.x, bestMatch.y});
         }
     }
 
     regionGrowing(grayImage);
 
-    int id, npoints, grayLevel;
+    for (RegSt &reg: regionsList)
+    {
+        reg.nFijos = 0;
+        reg.dMedia = 0;
+    }
+
+    int id, nPoints, grayLevel;
 
     for(int y = 0; y < dispImage.rows; y++)
     {
         for(int x = 0; x < dispImage.cols; x++)
         {
-            if(fixed.at<int>(y, x) == 0)
+            if(fixed.at<uchar>(y, x) == 1)
             {
                 id = segmentedImage.at<int>(y, x);
-                qDebug() << "ID:" << id;
-
-                if(id > -1)
-                {
-                    qDebug() << regionsList.size();
-                    //npoints = regionsList[id].npoints;
-                    qDebug() << "B";
-                    grayLevel = regionsList[id].gray;
-                    qDebug() << "C";
-                    segmentedImage.at<int>(y, x) = grayLevel;
-                    qDebug() << "D";
-
-                }
+                regionsList[id].nFijos++;
+                regionsList[id].dMedia += dispImage.at<float>(y, x);
             }
         }
     }
-    qDebug() << "ÑKULREJTGODYTW";
 
-    //segmentedImage.copyTo(dispImage);
-    colorSegmentedImage();
+    for (RegSt &reg: regionsList)
+    {
+        if(reg.nFijos == 0)
+        {
+            reg.dMedia = 0;
+        }
+        else
+        {
+            reg.dMedia = reg.dMedia / reg.nFijos;
+        }
+    }
+
+    for(int y = 0; y < dispGray.rows; y++)
+    {
+        for(int x = 0; x < dispGray.cols; x++)
+        {
+            if(fixed.at<uchar>(y, x) == 0)
+            {
+                id = segmentedImage.at<int>(y, x);
+                dispGray.at<uchar>(y, x) = regionsList[id].dMedia;
+            }
+            else
+                dispGray.at<uchar>(y, x) = dispImage.at<float>(y, x);
+
+            dispGray.at<uchar>(y, x) = dispGray.at<uchar>(y, x) * 3 * 240 / 320;
+            std::cout << dispGray.at<uchar>(y, x) << std::endl;
+        }
+    }
+
+    qDebug() << "KLUFDGOAH";
+
+//    segmentedImage.copyTo(dispImage);
+//      colorSegmentedImage();
+
 
 }
 
@@ -211,21 +228,8 @@ Rect MainWindow::getRect(Point2f src)
 {
     int margin = 6;
     Rect r = Rect(Point(src.x-margin, src.y-margin), Point(src.x+margin, src.y+margin));
-    qInfo() << __FUNCTION__ << r.height + r.y << r.width + r.x;
     return r;
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 void MainWindow::regionGrowing(Mat image)
 {
@@ -254,7 +258,7 @@ void MainWindow::regionGrowing(Mat image)
 
                 floodFill(image, maskImage, Point(x,y),Scalar(1),&winReg, thresh,thresh,  FLOODFILL_MASK_ONLY| 4 | ( 1 << 8 ) );
 
-                newReg.npoints=copyRegion(image, maskImage, regId, winReg, newReg.gray);
+                newReg.nPoints=copyRegion(image, maskImage, regId, winReg, newReg.gray);
                 regionsList.push_back(newReg);
                 regId++;
 
@@ -328,9 +332,9 @@ void MainWindow::colorSegmentedImage()
     for(int y=0; y<240; y++)
         for(int x=0; x<320; x++)
         {
+           qDebug() << "ColorSegmentedImage";
            id = segmentedImage.at<int>(y,x);
            dispImage.at<uchar>(y,x) = regionsList[id].gray;
-
         }
 }
 

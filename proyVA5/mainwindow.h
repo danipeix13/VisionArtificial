@@ -23,9 +23,9 @@ using namespace std;
 
 typedef struct{
     uchar gray;
-    int npoints;
-    int nfijos;
-    float dMedia;
+    int nPoints;
+    int nFijos = 0;
+    float dMedia = 0.0;
 }RegSt;
 
 namespace Ui {
@@ -47,7 +47,7 @@ private:
     VideoCapture *cap;
     ImgViewer *visorS, * visorD, *visorDisp, *visorTrueDisp;
     Mat colorImage, grayImage, destColorImage, destGrayImage, dispImage, dispCheckImage, fixed;
-    Mat segmentedImage;
+    Mat segmentedImage, dispGray;
     bool winSelected;
     Rect imageWindow;
     vector<RegSt> regionsList;
