@@ -68,8 +68,8 @@ public slots:
     void deselectWindow(QPointF p);
     void loadImageFromFile();
     void obtainCorners();
-
-
+    void loadTrueDispImage();
+    void getPixelValues(QPointF point);
 };
 
 

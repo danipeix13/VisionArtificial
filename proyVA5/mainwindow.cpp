@@ -39,8 +39,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(visorS,SIGNAL(mouseClic(QPointF)),this,SLOT(deselectWindow(QPointF)));
     connect(ui->loadButton,SIGNAL(clicked()),this,SLOT(loadImageFromFile()));
     connect(ui->dispInitBtn,SIGNAL(clicked()),this,SLOT(obtainCorners()));
-
-
+    connect(ui->loadGTBtn,SIGNAL(clicked()),this,SLOT(loadTrueDispImage()));
+    connect(visorDisp,SIGNAL(mouseClic(QPointF)),this,SLOT(getPixelValues(QPointF)));
 
     timer.start(60);
 
@@ -360,7 +360,7 @@ void MainWindow::change_color_gray(bool color)
     {
         ui->colorButton->setText("Color image");
         visorS->setImage(&grayImage);
-        visorD->setImage(&destGrayImage);
+        visorD->setImage(&destGrayImage);connect(&timer,SIGNAL(timeout()),this,SLOT(compute()));
 
     }
 }
@@ -443,4 +443,45 @@ void MainWindow::loadImageFromFile()
 
 }
 
+void MainWindow::loadTrueDispImage()
+{
+    ui->captureButton->setChecked(false);
+    ui->captureButton->setText("Start capture");
+    disconnect(&timer,SIGNAL(timeout()),this,SLOT(compute()));
+
+    QString name = QFileDialog::getOpenFileName(this, tr("Load image from file"),".", tr("Images (*.png *.xpm *.jpg)"));
+
+    Mat imfromfile = imread(name.toStdString(), IMREAD_COLOR);
+    Size imSize = imfromfile.size();
+    if(imSize.width!=320 || imSize.height!=240)
+        cv::resize(imfromfile, imfromfile, Size(320, 240));
+
+    imfromfile.copyTo(dispCheckImage);
+    cvtColor(dispCheckImage,dispCheckImage, COLOR_BGR2GRAY);
+
+    connect(&timer,SIGNAL(timeout()),this,SLOT(compute()));
+}
+
+void MainWindow::getPixelValues(QPointF point)
+{
+
+    float value = dispGray.at<uchar>(point.y(), point.x());
+    value=99;
+    float trueValue = dispCheckImage.at<uchar>(point.y(), point.x());
+    std::cout << value << std::endl;
+
+    float x = point.x();
+    float y = point.y();
+    float T = 160; //mm
+    float f = 3740; //pixeles
+    float addDisp = 300;
+
+    ui->estimatedLCD->display(value);
+    ui->trueLCD->display(trueValue);
+    ui->xEst->display((-x)*T/value);
+    ui->yEst->display((-y)*T/value);
+    ui->zEst->display(f*T/value);
+
+    qDebug() << "PixelValue";
+}
 
