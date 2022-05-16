@@ -464,24 +464,24 @@ void MainWindow::loadTrueDispImage()
 
 void MainWindow::getPixelValues(QPointF point)
 {
+    float x = point.x(), y = point.y(), T = 160/*mm*/, f = 3740 /*pixeles*/, addValue = 300;
 
-    float value = dispGray.at<uchar>(point.y(), point.x());
-    value=99;
-    float trueValue = dispCheckImage.at<uchar>(point.y(), point.x());
-    std::cout << value << std::endl;
+    float disp = dispGray.at<uchar>(point.y(), point.x());
+    disp = 103;
+    float newDisp = disp + addValue;
+    ui->estimatedLCD->display(disp);
+    ui->xEst->display((-x)*T/newDisp);
+    ui->yEst->display((-y)*T/newDisp);
+    ui->zEst->display(f*T/newDisp);
+    std::cout << "NUESTRA DISP:" << disp << endl;
 
-    float x = point.x();
-    float y = point.y();
-    float T = 160; //mm
-    float f = 3740; //pixeles
-    float addDisp = 300;
 
-    ui->estimatedLCD->display(value);
-    ui->trueLCD->display(trueValue);
-    ui->xEst->display((-x)*T/value);
-    ui->yEst->display((-y)*T/value);
-    ui->zEst->display(f*T/value);
-
-    qDebug() << "PixelValue";
+    float trueDisp = dispCheckImage.at<uchar>(point.y(), point.x());
+    std::cout << "DISP REAL:" << trueDisp << endl;
+    newDisp = trueDisp + addValue;
+    ui->trueLCD->display(trueDisp);
+    ui->xTrue->display((-x)*T/newDisp);
+    ui->yTrue->display((-y)*T/newDisp);
+    ui->zTrue->display(f*T/newDisp);
 }
 
