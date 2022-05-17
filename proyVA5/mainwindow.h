@@ -53,12 +53,15 @@ private:
     vector<RegSt> regionsList;
     std::vector<Point2f> leftImageCorners, rightImageCorners;
     std::vector<Vec4i> correspondencies;
+    int imgW;
 
     void regionGrowing(Mat image);
     int copyRegion(Mat image, Mat maskImage, int id, Rect r, uchar & mgray);
     void colorSegmentedImage();
 
     Rect getRect(Point2f src);
+
+    void propagate();
 
 public slots:
     void compute();

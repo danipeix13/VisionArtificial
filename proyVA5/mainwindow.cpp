@@ -78,10 +78,6 @@ void MainWindow::compute()
         cvtColor(colorImage, colorImage, COLOR_BGR2RGB);
 
     }
-//    obtainCorners();
-    //regionGrowing(grayImage);
-
-    //colorSegmentedImage();
 
     if(ui->kpChbx->isChecked())
     {
@@ -99,13 +95,58 @@ void MainWindow::compute()
     }
 
     if(winSelected)
-    {
         visorS->drawSquare(QPointF(imageWindow.x+imageWindow.width/2, imageWindow.y+imageWindow.height/2), imageWindow.width,imageWindow.height, Qt::green );
-    }
+
+    if(ui->disPropBtn->isChecked())
+        propagate();
+
     visorS->update();
     visorD->update();
     visorDisp->update();
     visorTrueDisp->update();
+
+}
+
+void MainWindow::propagate()
+{
+    int x[] = {-1,  0,  1,  1,  1,  0, -1, -1}, y[] = { 1,  1,  1,  0, -1, -1, -1,  0},
+        cont, regionPxl, regionEntorno, new_i, new_j;
+    float acum;
+
+//    qDebug() << "No sirve para nada xq son declaraciones";
+    for(int i = 0; i < dispImage.cols; i++)
+    {
+//        qDebug() << "col";
+        for(int j = 0; j < dispImage.rows; j++)
+        {
+//            qDebug() << "   row";
+            regionPxl = segmentedImage.at<int>(j, i);
+            acum = 0.0; cont = 0;
+            for(int k = 0; k < 9; k++)
+            {
+//                qDebug() << "       entorno" << k;
+                new_i = i + x[k], new_j = j + y[k];
+                if(new_i >= 0 && new_j >= 0 && new_i <= 320 && new_j <= 240)
+                {
+//                    qDebug() << "ª";
+                    regionEntorno = segmentedImage.at<int>(new_j, new_i);
+                    if(regionEntorno == regionPxl)
+                    {
+                        acum += dispImage.at<float>(j, i);
+                        cont++;
+                    }
+                }
+
+            }
+            if (cont > 0)
+//                if (dispImage.at<float>(j, i) == acum / cont)
+//                    ;//std::cout << "MISMUERTOSENPATINETE" << std::endl;
+//                else
+                    dispImage.at<float>(j, i) = acum / cont;
+            dispGray.at<uchar>(j, i) = dispImage.at<float>(j, i) * 3 * imgW / 320;
+//            qDebug() << "SUMSU" << (float)dispGray.at<uchar>(j, i);
+        }
+    }
 
 }
 
@@ -183,6 +224,7 @@ void MainWindow::obtainCorners()
                 id = segmentedImage.at<int>(y, x);
                 regionsList[id].nFijos++;
                 regionsList[id].dMedia += dispImage.at<float>(y, x);
+                qDebug() << dispImage.at<float>(y, x);
             }
         }
     }
@@ -198,7 +240,8 @@ void MainWindow::obtainCorners()
             reg.dMedia = reg.dMedia / reg.nFijos;
         }
     }
-
+    Mat matAux;
+    dispImage.copyTo(matAux);
     for(int y = 0; y < dispGray.rows; y++)
     {
         for(int x = 0; x < dispGray.cols; x++)
@@ -206,17 +249,17 @@ void MainWindow::obtainCorners()
             if(fixed.at<uchar>(y, x) == 0)
             {
                 id = segmentedImage.at<int>(y, x);
-                dispImage.at<float>(y, x) = regionsList[id].dMedia;
+                matAux.at<float>(y, x) = regionsList[id].dMedia;
             }
             else
-                dispImage.at<float>(y, x) = dispImage.at<float>(y, x);
-
-            dispGray.at<uchar>(y, x) = dispImage.at<float>(y, x) * 3 * 413 / 320;
-            std::cout << dispGray.at<uchar>(y, x) << std::endl;
+                matAux.at<float>(y, x) = dispImage.at<float>(y, x);
+//            std::cout << matAux.at<float>(y, x) << std::endl;
+            dispGray.at<uchar>(y, x) = matAux.at<float>(y, x) * 3 * imgW / 320;
+//            std::cout << dispGray.at<uchar>(y, x) << std::endl;
         }
     }
 
-    qDebug() << "KLUFDGOAH";
+//    qDebug() << "KLUFDGOAH";
 
 //    segmentedImage.copyTo(dispImage);
 //      colorSegmentedImage();
@@ -414,6 +457,7 @@ void MainWindow::loadImageFromFile()
         {
             Mat imfromfile = imread(name.toStdString(), IMREAD_COLOR);
             Size imSize = imfromfile.size();
+            imgW = imSize.width;
             if(imSize.width!=320 || imSize.height!=240)
                 cv::resize(imfromfile, imfromfile, Size(320, 240));
 
@@ -464,14 +508,16 @@ void MainWindow::loadTrueDispImage()
 
 void MainWindow::getPixelValues(QPointF point)
 {
-    float x = point.x(), y = point.y(), T = 160/*mm*/, f = 3740 /*pixeles*/, addValue = 300;
+    //TODO: Escalar a la imagen original
+
+    float x = point.x(), y = point.y(), T = 160/*mm*/, f = 3740 /*pixeles*/, addValue = 300, cx = 160, cy = 120;
 
     float disp = dispGray.at<uchar>(point.y(), point.x());
     //disp = 103;
     float newDisp = disp + addValue;
     ui->estimatedLCD->display(disp);
-    ui->xEst->display((-x)*T/newDisp);
-    ui->yEst->display((-y)*T/newDisp);
+    ui->xEst->display(-(x-cx)*T/newDisp);
+    ui->yEst->display(-(y-cy)*T/newDisp);
     ui->zEst->display(f*T/newDisp);
     std::cout << "NUESTRA DISP:" << disp << endl;
 
@@ -480,8 +526,8 @@ void MainWindow::getPixelValues(QPointF point)
     std::cout << "DISP REAL:" << trueDisp << endl;
     newDisp = trueDisp + addValue;
     ui->trueLCD->display(trueDisp);
-    ui->xTrue->display((-x)*T/newDisp);
-    ui->yTrue->display((-y)*T/newDisp);
+    ui->xTrue->display(-(x-cx)*T/newDisp);
+    ui->yTrue->display(-(y-cy)*T/newDisp);
     ui->zTrue->display(f*T/newDisp);
 }
 
