@@ -206,12 +206,12 @@ void MainWindow::obtainCorners()
             if(fixed.at<uchar>(y, x) == 0)
             {
                 id = segmentedImage.at<int>(y, x);
-                dispGray.at<uchar>(y, x) = regionsList[id].dMedia;
+                dispImage.at<float>(y, x) = regionsList[id].dMedia;
             }
             else
-                dispGray.at<uchar>(y, x) = dispImage.at<float>(y, x);
+                dispImage.at<float>(y, x) = dispImage.at<float>(y, x);
 
-            dispGray.at<uchar>(y, x) = dispGray.at<uchar>(y, x) * 3 * 240 / 320;
+            dispGray.at<uchar>(y, x) = dispImage.at<float>(y, x) * 3 * 413 / 320;
             std::cout << dispGray.at<uchar>(y, x) << std::endl;
         }
     }
@@ -467,7 +467,7 @@ void MainWindow::getPixelValues(QPointF point)
     float x = point.x(), y = point.y(), T = 160/*mm*/, f = 3740 /*pixeles*/, addValue = 300;
 
     float disp = dispGray.at<uchar>(point.y(), point.x());
-    disp = 103;
+    //disp = 103;
     float newDisp = disp + addValue;
     ui->estimatedLCD->display(disp);
     ui->xEst->display((-x)*T/newDisp);
