@@ -109,8 +109,10 @@ void MainWindow::compute()
 
 void MainWindow::propagate()
 {
-    int x[] = {-1,  0,  1,  1,  1,  0, -1, -1}, y[] = { 1,  1,  1,  0, -1, -1, -1,  0},
+    int x[] = {-1,  0,  1,  1,  1,  0, -1, -1, 0},
+        y[] = { 1,  1,  1,  0, -1, -1, -1,  0, 0},
         cont, regionPxl, regionEntorno, new_i, new_j;
+
     float acum;
 
 //    qDebug() << "No sirve para nada xq son declaraciones";
@@ -119,32 +121,39 @@ void MainWindow::propagate()
 //        qDebug() << "col";
         for(int j = 0; j < dispImage.rows; j++)
         {
-//            qDebug() << "   row";
-            regionPxl = segmentedImage.at<int>(j, i);
-            acum = 0.0; cont = 0;
-            for(int k = 0; k < 9; k++)
+//            qDebug() << "   row";//fijos
+            if(fixed.at<uchar>(j,i) == 0)
             {
-//                qDebug() << "       entorno" << k;
-                new_i = i + x[k], new_j = j + y[k];
-                if(new_i >= 0 && new_j >= 0 && new_i <= 320 && new_j <= 240)
+                regionPxl = segmentedImage.at<int>(j, i);
+                acum = 0.0; cont = 0;
+                for(int k = 0; k <= 9; k++)
                 {
-//                    qDebug() << "ª";
-                    regionEntorno = segmentedImage.at<int>(new_j, new_i);
-                    if(regionEntorno == regionPxl)
+    //                qDebug() << "       entorno" << k;
+                    new_i = i + x[k], new_j = j + y[k];
+                    if(new_i >= 0 && new_j >= 0 && new_i <= 320 && new_j <= 240)
                     {
-                        acum += dispImage.at<float>(j, i);
-                        cont++;
+    //                    qDebug() << "ª";
+                        regionEntorno = segmentedImage.at<int>(new_j, new_i);
+                        if(regionEntorno == regionPxl)
+                        {
+                            acum += dispImage.at<float>(new_j, new_i);
+                            cont++;
+                        }
                     }
                 }
+                if (cont > 0)
+    //                if (dispImage.at<float>(j, i) == acum / cont)
+    //                    ;//std::cout << "f" << std::endl;
+    //                else
+                        dispImage.at<float>(j, i) = acum / cont;
+                qDebug() << "acum:" << acum << "cont" << cont;
 
+                float gray = dispImage.at<float>(j, i) * 3 * imgW / 320;
+                if(gray > 255)
+                    dispGray.at<uchar>(j, i) = 255;
+                else
+                    dispGray.at<uchar>(j, i) = gray;
             }
-            if (cont > 0)
-//                if (dispImage.at<float>(j, i) == acum / cont)
-//                    ;//std::cout << "MISMUERTOSENPATINETE" << std::endl;
-//                else
-                    dispImage.at<float>(j, i) = acum / cont;
-            dispGray.at<uchar>(j, i) = dispImage.at<float>(j, i) * 3 * imgW / 320;
-//            qDebug() << "SUMSU" << (float)dispGray.at<uchar>(j, i);
         }
     }
 
@@ -196,9 +205,10 @@ void MainWindow::obtainCorners()
         }
         //else qDebug()<< __FUNCTION__ << "VAYA :') en X";
 
-
-        if (bestResult >= 0.8)
+        //ajustar
+        if (bestResult >= 0.95)
         {
+            //borrar de la lista de la derecha
             fixed.at<uchar>(left.y, left.x) = 1;
             dispImage.at<float>(left.y, left.x) = left.x - bestMatch.x;
             correspondencies.push_back(Vec4i{left.x, left.y, bestMatch.x, bestMatch.y});
@@ -224,7 +234,6 @@ void MainWindow::obtainCorners()
                 id = segmentedImage.at<int>(y, x);
                 regionsList[id].nFijos++;
                 regionsList[id].dMedia += dispImage.at<float>(y, x);
-                qDebug() << dispImage.at<float>(y, x);
             }
         }
     }
@@ -237,11 +246,10 @@ void MainWindow::obtainCorners()
         }
         else
         {
-            reg.dMedia = reg.dMedia / reg.nFijos;
+            reg.dMedia = reg.dMedia / reg.nFijos * 1.0;
         }
     }
-    Mat matAux;
-    dispImage.copyTo(matAux);
+
     for(int y = 0; y < dispGray.rows; y++)
     {
         for(int x = 0; x < dispGray.cols; x++)
@@ -249,27 +257,23 @@ void MainWindow::obtainCorners()
             if(fixed.at<uchar>(y, x) == 0)
             {
                 id = segmentedImage.at<int>(y, x);
-                matAux.at<float>(y, x) = regionsList[id].dMedia;
+                dispImage.at<float>(y, x) = regionsList[id].dMedia;
             }
+
+//            std::cout << matAux.at<float>(y, x) << std::endl;//si se pasa 255
+            float gray = dispImage.at<float>(y, x) * 3 * imgW / 320;
+            if(gray > 255)
+                dispGray.at<uchar>(y, x) = 255;
             else
-                matAux.at<float>(y, x) = dispImage.at<float>(y, x);
-//            std::cout << matAux.at<float>(y, x) << std::endl;
-            dispGray.at<uchar>(y, x) = matAux.at<float>(y, x) * 3 * imgW / 320;
+                dispGray.at<uchar>(y, x) = gray;
 //            std::cout << dispGray.at<uchar>(y, x) << std::endl;
         }
     }
-
-//    qDebug() << "KLUFDGOAH";
-
-//    segmentedImage.copyTo(dispImage);
-//      colorSegmentedImage();
-
-
 }
 
 Rect MainWindow::getRect(Point2f src)
 {
-    int margin = 6;
+    int margin = 7;
     Rect r = Rect(Point(src.x-margin, src.y-margin), Point(src.x+margin, src.y+margin));
     return r;
 }
@@ -443,6 +447,8 @@ void MainWindow::loadImageFromFile()
 {
 
     // view 1 && view5??
+    fixed.setTo(0);
+    dispImage.setTo(0);
 
     ui->captureButton->setChecked(false);
     ui->captureButton->setText("Start capture");
