@@ -115,24 +115,19 @@ void MainWindow::propagate()
 
     float acum;
 
-//    qDebug() << "No sirve para nada xq son declaraciones";
     for(int i = 0; i < dispImage.cols; i++)
     {
-//        qDebug() << "col";
         for(int j = 0; j < dispImage.rows; j++)
         {
-//            qDebug() << "   row";//fijos
             if(fixed.at<uchar>(j,i) == 0)
             {
                 regionPxl = segmentedImage.at<int>(j, i);
                 acum = 0.0; cont = 0;
                 for(int k = 0; k <= 9; k++)
                 {
-    //                qDebug() << "       entorno" << k;
                     new_i = i + x[k], new_j = j + y[k];
                     if(new_i >= 0 && new_j >= 0 && new_i <= 320 && new_j <= 240)
                     {
-    //                    qDebug() << "ª";
                         regionEntorno = segmentedImage.at<int>(new_j, new_i);
                         if(regionEntorno == regionPxl)
                         {
@@ -142,11 +137,7 @@ void MainWindow::propagate()
                     }
                 }
                 if (cont > 0)
-    //                if (dispImage.at<float>(j, i) == acum / cont)
-    //                    ;//std::cout << "f" << std::endl;
-    //                else
-                        dispImage.at<float>(j, i) = acum / cont;
-                qDebug() << "acum:" << acum << "cont" << cont;
+                    dispImage.at<float>(j, i) = acum / cont;
 
                 float gray = dispImage.at<float>(j, i) * 3 * imgW / 320;
                 if(gray > 255)
@@ -161,8 +152,6 @@ void MainWindow::propagate()
 
 void MainWindow::obtainCorners()
 {
-    qDebug() << "obtainCorners";
-
     leftImageCorners.clear();
     rightImageCorners.clear();
     correspondencies.clear();
@@ -199,16 +188,12 @@ void MainWindow::obtainCorners()
                             bestResult = result.at<float>(Point(0,0));
                         }
                     }
-                    //else qDebug()<< __FUNCTION__ << "  VAYA :') en Y";
                 }
             }
         }
-        //else qDebug()<< __FUNCTION__ << "VAYA :') en X";
 
-        //ajustar
         if (bestResult >= 0.95)
         {
-            //borrar de la lista de la derecha
             fixed.at<uchar>(left.y, left.x) = 1;
             dispImage.at<float>(left.y, left.x) = left.x - bestMatch.x;
             correspondencies.push_back(Vec4i{left.x, left.y, bestMatch.x, bestMatch.y});
@@ -223,7 +208,7 @@ void MainWindow::obtainCorners()
         reg.dMedia = 0;
     }
 
-    int id, nPoints, grayLevel;
+    int id;
 
     for(int y = 0; y < dispImage.rows; y++)
     {
@@ -260,13 +245,11 @@ void MainWindow::obtainCorners()
                 dispImage.at<float>(y, x) = regionsList[id].dMedia;
             }
 
-//            std::cout << matAux.at<float>(y, x) << std::endl;//si se pasa 255
             float gray = dispImage.at<float>(y, x) * 3 * imgW / 320;
             if(gray > 255)
                 dispGray.at<uchar>(y, x) = 255;
             else
                 dispGray.at<uchar>(y, x) = gray;
-//            std::cout << dispGray.at<uchar>(y, x) << std::endl;
         }
     }
 }
@@ -368,7 +351,6 @@ int MainWindow::copyRegion(Mat image, Mat maskImage, int id, Rect r, uchar & mgr
 
     mgray = meanGray/nPoints;
     return nPoints;
-
 }
 
 
@@ -445,8 +427,6 @@ void MainWindow::deselectWindow(QPointF p)
 
 void MainWindow::loadImageFromFile()
 {
-
-    // view 1 && view5??
     fixed.setTo(0);
     dispImage.setTo(0);
 
@@ -514,26 +494,20 @@ void MainWindow::loadTrueDispImage()
 
 void MainWindow::getPixelValues(QPointF point)
 {
-    //TODO: Escalar a la imagen original
-
     float x = point.x(), y = point.y(), T = 160/*mm*/, f = 3740 /*pixeles*/, addValue = 300, cx = 160, cy = 120;
 
     float disp = dispGray.at<uchar>(point.y(), point.x());
-    //disp = 103;
     float newDisp = disp + addValue;
     ui->estimatedLCD->display(disp);
-    ui->xEst->display(-(x-cx)*T/newDisp);
-    ui->yEst->display(-(y-cy)*T/newDisp);
+    ui->xEst->display((-(x-cx)*T/newDisp) * 1329 / 320);
+    ui->yEst->display((-(y-cy)*T/newDisp) * 1110 / 240);
     ui->zEst->display(f*T/newDisp);
-    std::cout << "NUESTRA DISP:" << disp << endl;
-
 
     float trueDisp = dispCheckImage.at<uchar>(point.y(), point.x());
-    std::cout << "DISP REAL:" << trueDisp << endl;
     newDisp = trueDisp + addValue;
     ui->trueLCD->display(trueDisp);
-    ui->xTrue->display(-(x-cx)*T/newDisp);
-    ui->yTrue->display(-(y-cy)*T/newDisp);
+    ui->xTrue->display((-(x-cx)*T/newDisp) * 1329 / 320);
+    ui->yTrue->display((-(y-cy)*T/newDisp) * 1110 / 240);
     ui->zTrue->display(f*T/newDisp);
 }
 
